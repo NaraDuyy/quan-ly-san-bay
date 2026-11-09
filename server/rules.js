@@ -1,5 +1,8 @@
 // Giả định G1–G8 và các ràng buộc cài ở tầng ứng dụng (R9, tính phí).
 
+// Sân bay ở Hà Nội: mọi mốc thời gian tính theo giờ Việt Nam, kể cả khi máy chủ chạy UTC (Render…)
+process.env.TZ = 'Asia/Ho_Chi_Minh';
+
 const G = {
   QUAY_DAU_PHUT: 120,        // G1
   CHU_KY_BAO_DUONG: 180,     // G2

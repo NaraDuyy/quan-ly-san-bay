@@ -5,6 +5,8 @@ Web minh họa cho bài tập lớn môn **Cơ sở dữ liệu**: *Thiết kế
 
 Toàn bộ thiết kế trong báo cáo được cài đặt và chạy được: 15 bảng, ràng buộc R1–R10, truy vấn Q1–Q5, dữ liệu mẫu theo kế hoạch mục 9.
 
+**Bản chạy trực tuyến:** https://quan-ly-san-bay.onrender.com/
+
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/NaraDuyy/quan-ly-san-bay)
 
 ## Triển khai công khai (Render, miễn phí)
