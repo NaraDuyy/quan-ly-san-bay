@@ -5,6 +5,17 @@ Web minh họa cho bài tập lớn môn **Cơ sở dữ liệu**: *Thiết kế
 
 Toàn bộ thiết kế trong báo cáo được cài đặt và chạy được: 15 bảng, ràng buộc R1–R10, truy vấn Q1–Q5, dữ liệu mẫu theo kế hoạch mục 9.
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/NaraDuyy/quan-ly-san-bay)
+
+## Triển khai công khai (Render, miễn phí)
+
+1. Bấm nút **Deploy to Render** ở trên, đăng nhập Render bằng tài khoản GitHub.
+2. Render đọc `render.yaml`, chọn gói **Free**, bấm **Deploy Blueprint**. Sau vài phút sẽ có địa chỉ dạng `https://quan-ly-san-bay-xxxx.onrender.com`.
+3. Mỗi lần `git push` lên nhánh `main`, Render tự build và triển khai lại.
+
+Lưu ý gói miễn phí: máy chủ ngủ sau 15 phút không có truy cập (lần mở đầu tiên chờ khoảng 1 phút),
+và ổ đĩa không lưu lâu dài — mỗi lần khởi động lại, dữ liệu được nạp lại từ đầu. Mọi người truy cập đều có thể sửa dữ liệu demo.
+
 ![ERD](docs/erd.png)
 
 ## Tính năng

@@ -1,0 +1,14 @@
+# Cấu hình triển khai lên Render (https://render.com) — gói miễn phí.
+# Ổ đĩa của gói miễn phí không lưu lâu dài: mỗi lần khởi động lại, máy chủ tự tạo CSDL
+# và nạp lại dữ liệu mẫu (xem server/index.js).
+services:
+  - type: web
+    name: quan-ly-san-bay
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/tables
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
