@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quản lý Sân bay</title>
+  <meta name="description" content="Web demo bài tập lớn Cơ sở dữ liệu — Thiết kế CSDL hệ thống quản lý sân bay">
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#/">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+        <span><strong>Sân bay</strong><small>Hệ thống quản lý</small></span>
+      </a>
+      <nav id="nav"></nav>
+      <div class="sidebar-foot">
+        <button class="btn-ghost" id="themeToggle" type="button" title="Đổi giao diện sáng/tối">◐ Giao diện</button>
+      </div>
+    </aside>
+    <div class="main">
+      <header class="topbar">
+        <button class="menu-btn" id="menuBtn" type="button" aria-label="Mở menu">☰</button>
+        <div class="crumbs" id="crumbs"></div>
+        <div class="clock" id="clock"></div>
+      </header>
+      <main id="view" class="view"></main>
+    </div>
+  </div>
+  <div id="modalRoot"></div>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

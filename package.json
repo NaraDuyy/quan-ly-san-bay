@@ -1,0 +1,21 @@
+{
+  "name": "quan-ly-san-bay",
+  "version": "1.0.0",
+  "description": "Web demo cho bài tập lớn Cơ sở dữ liệu: Thiết kế CSDL hệ thống quản lý sân bay",
+  "private": true,
+  "main": "server/index.js",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node --no-warnings=ExperimentalWarning server/index.js",
+    "dev": "node --no-warnings=ExperimentalWarning --watch server/index.js",
+    "seed": "node --no-warnings=ExperimentalWarning server/seed.js",
+    "seed:lon": "node --no-warnings=ExperimentalWarning server/seed.js --scale=lon",
+    "export:mysql": "node --no-warnings=ExperimentalWarning server/seed.js --mysql=database/mysql/04_seed.sql",
+    "test": "node --no-warnings=ExperimentalWarning --test \"test/**/*.test.js\""
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
