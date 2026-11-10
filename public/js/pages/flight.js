@@ -1,6 +1,6 @@
 // Chi tiết một chuyến bay: đổi trạng thái (R9), tổ phục vụ (R10), danh sách vé, sơ đồ ghế.
 import { api, esc, money, dt, label, badge, table, seatMap, toast, confirmBox, VAI_TRO_LABEL } from '../lib.js';
-import { state, refreshCounts } from '../app.js';
+import { state, refreshCounts, canTable, canAction, guestNote } from '../app.js';
 import { clearOptionCache } from './data.js';
 
 const VAI_TRO_THEO_VI_TRI = { THU_TUC: 'LAM_THU_TUC', AN_NINH: 'AN_NINH_CONG', DIEU_PHOI: 'DIEU_PHOI_MAT_DAT', KY_THUAT: 'KY_THUAT_SAN_DO' };
@@ -16,6 +16,8 @@ export default async function flight(view, m, stale) {
     const trangThai = state.meta.tables.CHUYENBAY.columns.find((x) => x.name === 'TrangThai').options;
     const daPhanCong = new Set(d.toPhucVu.map((p) => p.MaNV));
     const veHL = d.ve.filter((v) => v.TrangThai !== 'DA_HUY');
+    const doiTrangThai = canAction('trang-thai');
+    const phanCong = canTable('PHANCONG');
     view.innerHTML = `
       <div class="page-head"><div><h1>Chuyến ${esc(c.SoHieuChuyen)} ${badge(c.TrangThai)}</h1>
         <p>${esc(c.TenHang)} · tàu bay ${esc(c.SoHieuMB)} (${esc(c.Model)}, ${c.SoGhe} ghế) · mã chuyến ${c.MaChuyen}</p></div>
@@ -41,8 +43,9 @@ export default async function flight(view, m, stale) {
         <div class="card"><div class="card-head"><div><h2>Trạng thái khai thác</h2>
           <p>Chuyển sang <i>Làm thủ tục</i> trở đi cần đủ tổ phục vụ (R9). Hủy chuyến sẽ hủy toàn bộ vé.</p></div></div>
           <div class="card-body stack">
-            <div class="row"><select id="tt">${trangThai.map((t) => `<option value="${t}" ${t === c.TrangThai ? 'selected' : ''}>${esc(label(t))}</option>`).join('')}</select>
-              <button class="btn primary" id="doiTT">Cập nhật</button></div>
+            ${doiTrangThai ? `<div class="row"><select id="tt">${trangThai.map((t) => `<option value="${t}" ${t === c.TrangThai ? 'selected' : ''}>${esc(label(t))}</option>`).join('')}</select>
+              <button class="btn primary" id="doiTT">Cập nhật</button></div>`
+              : `<div>Trạng thái hiện tại: ${badge(c.TrangThai)} <span class="muted small">· chỉ vai trò Điều phối / Quản trị được đổi</span></div>`}
             <div>${d.r9 ? `<span class="badge bad">Chưa đạt R9</span><p class="small" style="color:var(--bad);margin:6px 0 0">${esc(d.r9)}</p>`
               : '<span class="badge ok">Đạt R9 — đủ tổ phục vụ tối thiểu</span>'}</div>
           </div></div>
@@ -56,15 +59,15 @@ export default async function flight(view, m, stale) {
           { label: 'Vị trí', render: (r) => esc(label(r.ViTri)) },
           { label: 'Vai trò trên chuyến', render: (r) => esc(VAI_TRO_LABEL[r.VaiTro]) },
           { label: 'Thưởng chuyến', align: 'num', render: (r) => money(r.MucThuongChuyen) },
-          { label: '', align: 'actions', render: (r) => `<button class="btn sm link danger" data-rm="${r.MaNV}">Gỡ</button>` },
+          ...(phanCong ? [{ label: '', align: 'actions', render: (r) => `<button class="btn sm link danger" data-rm="${r.MaNV}">Gỡ</button>` }] : []),
         ], d.toPhucVu, { empty: 'Chưa phân công nhân viên' })}</div>
-        <form class="card-body filters" id="pc" style="padding-top:14px;border-top:1px solid var(--border)">
+        ${phanCong ? `<form class="card-body filters" id="pc" style="padding-top:14px;border-top:1px solid var(--border)">
           <div class="field" style="min-width:260px"><label>Nhân viên</label><select name="MaNV" required>
             ${nv.filter((n) => !daPhanCong.has(n.MaNV) && VAI_TRO_THEO_VI_TRI[n.ViTri]).map((n) =>
               `<option value="${n.MaNV}" data-vt="${VAI_TRO_THEO_VI_TRI[n.ViTri]}">${esc(n.HoTen)} · ${esc(label(n.ViTri))}</option>`).join('')}</select></div>
           <div class="field"><label>Vai trò</label><select name="VaiTro">${Object.entries(VAI_TRO_LABEL).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('')}</select></div>
           <button class="btn primary">+ Phân công</button>
-        </form></div>
+        </form>` : `<div class="card-body" style="padding-top:14px">${state.me.user ? '<span class="muted small">Chỉ vai trò Điều phối / Quản trị được phân công nhân viên.</span>' : guestNote('Đăng nhập với vai trò Điều phối để phân công nhân viên.')}</div>`}</div>
 
       <div class="card" style="margin-top:16px"><div class="card-head"><div><h2>Sơ đồ ghế</h2><p>Ghế xám là ghế đã bán (vé chưa hủy)</p></div>
         <span class="spacer"></span>${c.TrangThai !== 'HUY' ? '<a class="btn sm" href="#/ban-ve">✚ Bán vé</a>' : ''}</div>
@@ -83,6 +86,7 @@ export default async function flight(view, m, stale) {
         ], d.ve, { empty: 'Chưa bán vé nào' })}</div></div>`;
 
     const pc = view.querySelector('#pc');
+    if (pc) {
     const syncVT = () => { const o = pc.MaNV.selectedOptions[0]; if (o) pc.VaiTro.value = o.dataset.vt; };
     pc.MaNV.onchange = syncVT; syncVT();
     pc.onsubmit = async (e) => {
@@ -92,6 +96,7 @@ export default async function flight(view, m, stale) {
         toast('Đã phân công nhân viên', 'ok'); reload();
       } catch (ex) { toast(ex.message, 'error'); }
     };
+    }
     view.querySelectorAll('[data-rm]').forEach((b) => {
       b.onclick = async () => {
         if (!(await confirmBox('Gỡ nhân viên này khỏi tổ phục vụ chuyến?', 'Gỡ'))) return;
@@ -101,7 +106,7 @@ export default async function flight(view, m, stale) {
         } catch (ex) { toast(ex.message, 'error'); }
       };
     });
-    view.querySelector('#doiTT').onclick = async () => {
+    if (doiTrangThai) view.querySelector('#doiTT').onclick = async () => {
       const tt = view.querySelector('#tt').value;
       if (tt === 'HUY' && c.TrangThai !== 'HUY' && !(await confirmBox('Hủy chuyến bay sẽ chuyển toàn bộ vé sang trạng thái Đã hủy. Tiếp tục?', 'Hủy chuyến'))) return;
       try {

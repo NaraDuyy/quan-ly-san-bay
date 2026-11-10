@@ -407,7 +407,8 @@ function toMySQL(D, scaleName) {
 // nên chạy được cả khi máy chủ web đang giữ kết nối.
 function dropAll(db) {
   db.exec('PRAGMA foreign_keys = OFF');
-  const objs = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").all();
+  // TAIKHOAN (tài khoản đăng nhập của web) được giữ lại khi nạp lại dữ liệu mẫu
+  const objs = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name <> 'TAIKHOAN'").all();
   tx(db, () => { for (const o of objs) db.exec(`DROP TABLE IF EXISTS "${o.name}"`); });
   db.exec('PRAGMA foreign_keys = ON');
 }

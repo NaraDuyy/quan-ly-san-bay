@@ -13,7 +13,8 @@
     "seed": "node --no-warnings=ExperimentalWarning server/seed.js",
     "seed:lon": "node --no-warnings=ExperimentalWarning server/seed.js --scale=lon",
     "export:mysql": "node --no-warnings=ExperimentalWarning server/seed.js --mysql=database/mysql/04_seed.sql",
-    "test": "node --no-warnings=ExperimentalWarning --test \"test/**/*.test.js\""
+    "test": "node --no-warnings=ExperimentalWarning --test \"test/**/*.test.js\"",
+    "dat-mat-khau": "node --no-warnings=ExperimentalWarning server/accounts-cli.js"
   },
   "dependencies": {
     "express": "^5.1.0"

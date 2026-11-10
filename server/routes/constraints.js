@@ -1,7 +1,7 @@
 // Ràng buộc toàn vẹn R1–R10 (mục 7): mô tả, thử vi phạm (luôn ROLLBACK) và kiểm tra dữ liệu hiện có.
 const express = require('express');
 const { dryRun, friendlyError } = require('../db');
-const { HttpError } = require('./crud');
+const { HttpError } = require('../auth');
 const { kiemTraR9, fmtDateTime, fmtDate, G } = require('../rules');
 
 const RULES = [

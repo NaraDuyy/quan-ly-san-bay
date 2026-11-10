@@ -1,12 +1,16 @@
 // Tiện ích dùng chung: gọi API, định dạng, nhãn, bảng, modal, toast, SQL, biểu đồ.
 
 export async function api(path, { method = 'GET', body } = {}) {
+  const write = method !== 'GET';
   const res = await fetch('/api' + path, {
     method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
+    // Máy chủ chỉ nhận yêu cầu ghi dạng JSON
+    headers: write ? { 'Content-Type': 'application/json' } : undefined,
+    body: write ? JSON.stringify(body ?? {}) : undefined,
   });
   const data = await res.json().catch(() => ({}));
+  // Phiên hết hạn / bị khóa / thiếu quyền -> báo app tải lại trạng thái đăng nhập
+  if (res.status === 401 || res.status === 403) window.dispatchEvent(new Event('auth-changed'));
   if (!res.ok) throw new Error(data.error || `Lỗi ${res.status}`);
   return data;
 }

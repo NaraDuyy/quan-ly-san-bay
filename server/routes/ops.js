@@ -2,7 +2,7 @@
 // ghi nhận bảo dưỡng, cùng các truy vấn Q1–Q5.
 const express = require('express');
 const { tx } = require('../db');
-const { HttpError } = require('./crud');
+const { HttpError, requireAction } = require('../auth');
 const { TABLES, PLAN } = require('../meta');
 const Q = require('../queries');
 const { reseed, SCALES } = require('../seed');
@@ -89,7 +89,7 @@ module.exports = function opsRouter(db) {
   });
 
   // Đổi trạng thái chuyến — R9 kiểm tra ở tầng ứng dụng
-  r.post('/chuyen/:id/trang-thai', (req, res) => {
+  r.post('/chuyen/:id/trang-thai', requireAction('trang-thai'), (req, res) => {
     const maChuyen = Number(req.params.id);
     const { TrangThai } = req.body;
     const c = db.prepare('SELECT * FROM CHUYENBAY WHERE MaChuyen = ?').get(maChuyen);
@@ -110,7 +110,7 @@ module.exports = function opsRouter(db) {
   });
 
   // ------------------------------------------------------------ bán vé (A.1: bọc trong transaction)
-  r.post('/ban-ve', (req, res) => {
+  r.post('/ban-ve', requireAction('ban-ve'), (req, res) => {
     const b = req.body || {};
     const maChuyen = Number(b.MaChuyen);
     const c = db.prepare(`SELECT c.*, mb.SoGhe AS TongGhe FROM CHUYENBAY c JOIN MAYBAY mb ON mb.SoHieuMB = c.SoHieuMB WHERE MaChuyen = ?`).get(maChuyen);
@@ -152,14 +152,14 @@ module.exports = function opsRouter(db) {
   });
 
   // ------------------------------------------------------------ nạp lại dữ liệu mẫu
-  r.post('/reset', (req, res) => {
+  r.post('/reset', requireAction('reset'), (req, res) => {
     const scale = SCALES[req.body?.scale] ? req.body.scale : 'kehoach';
     reseed(db, scale);
     res.json({ ok: true, scale });
   });
 
   // ------------------------------------------------------------ bảo dưỡng tàu bay
-  r.post('/may-bay/:soHieu/bao-duong', (req, res) => {
+  r.post('/may-bay/:soHieu/bao-duong', requireAction('bao-duong'), (req, res) => {
     const ngay = /^\d{4}-\d{2}-\d{2}$/.test(req.body?.ngay || '') ? req.body.ngay : fmtDate(new Date());
     const info = db.prepare('UPDATE MAYBAY SET NgayBaoDuongCuoi = ? WHERE SoHieuMB = ?').run(ngay, req.params.soHieu);
     if (!info.changes) throw new HttpError(404, 'Không tìm thấy tàu bay');

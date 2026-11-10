@@ -1,5 +1,5 @@
 import { api, esc, num, dt, date, monthLabel, badge, table, stackedBars, moneyShort, confirmBox, toast } from '../lib.js';
-import { state, refreshCounts } from '../app.js';
+import { state, refreshCounts, canAction } from '../app.js';
 import { clearOptionCache } from './data.js';
 
 export const REVENUE_SERIES = [
@@ -20,8 +20,8 @@ export default async function overview(view, m, stale) {
       <h1>Tổng quan khai thác</h1>
       <p>Cảng hàng không quốc tế Nội Bài (HAN) — số liệu tính đến ${esc(dt(d.now))}.</p>
     </div><div class="row">
-      <select id="scale" title="Quy mô dữ liệu mẫu"><option value="kehoach">Đúng kế hoạch mục 9</option><option value="lon">Quy mô lớn (~9.000 vé)</option></select>
-      <button class="btn" id="reset">↻ Nạp lại dữ liệu mẫu</button>
+      ${canAction('reset') ? `<select id="scale" title="Quy mô dữ liệu mẫu"><option value="kehoach">Đúng kế hoạch mục 9</option><option value="lon">Quy mô lớn (~9.000 vé)</option></select>
+      <button class="btn" id="reset">↻ Nạp lại dữ liệu mẫu</button>` : ''}
       <a class="btn primary" href="#/ban-ve">✚ Bán vé</a></div></div>
 
     <div class="kpis">
@@ -68,7 +68,8 @@ export default async function overview(view, m, stale) {
 
   stackedBars(view.querySelector('#revChart'), d.doanhThu.map((r) => ({ x: r.Thang, ...r })), REVENUE_SERIES, { xLabel: monthLabel });
 
-  view.querySelector('#reset').onclick = async () => {
+  const resetBtn = view.querySelector('#reset');
+  if (resetBtn) resetBtn.onclick = async () => {
     if (!(await confirmBox('Toàn bộ dữ liệu hiện tại sẽ bị xóa và thay bằng dữ liệu mẫu mới (neo theo ngày hôm nay). Tiếp tục?', 'Nạp lại'))) return;
     try {
       await api('/reset', { method: 'POST', body: { scale: view.querySelector('#scale').value } });

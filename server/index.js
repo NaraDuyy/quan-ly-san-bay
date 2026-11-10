@@ -3,13 +3,18 @@ const path = require('node:path');
 const express = require('express');
 const { open, hasSchema, friendlyError, DB_FILE } = require('./db');
 const { reseed } = require('./seed');
+const { initAccounts, sessionMiddleware, requireJsonForWrites, authRouter, accountsRouter } = require('./auth');
 const crudRouter = require('./routes/crud');
 const opsRouter = require('./routes/ops');
 const constraintsRouter = require('./routes/constraints');
 
 function createApp(db) {
   const app = express();
+  app.set('trust proxy', 1); // chạy sau proxy HTTPS của Render: req.secure, req.ip đúng
   app.use(express.json({ limit: '1mb' }));
+  app.use('/api', requireJsonForWrites, sessionMiddleware(db));
+  app.use('/api/auth', authRouter(db));
+  app.use('/api/accounts', accountsRouter(db));
   app.use('/api/tables', crudRouter(db));
   app.use('/api/constraints', constraintsRouter(db));
   app.use('/api', opsRouter(db));
@@ -35,6 +40,7 @@ if (require.main === module) {
     console.log('Chưa có dữ liệu — đang tạo CSDL và nạp dữ liệu mẫu…');
     reseed(db);
   }
+  initAccounts(db, { dataDir: path.dirname(DB_FILE) });
   createApp(db).listen(PORT, () => {
     console.log(`Quản lý sân bay đang chạy tại http://localhost:${PORT}`);
   });

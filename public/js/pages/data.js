@@ -1,6 +1,6 @@
 // Màn hình quản trị tổng quát cho 15 bảng: tìm kiếm, sắp xếp, phân trang, thêm / sửa / xóa.
 import { api, esc, money, num, dt, date, label, badge, toast, modal, confirmBox, VAI_TRO_LABEL } from '../lib.js';
-import { state, refreshCounts } from '../app.js';
+import { state, refreshCounts, canTable, roleLabel, guestNote } from '../app.js';
 
 const BADGE_COLS = new Set(['TrangThai']);
 const optionCache = {};
@@ -35,10 +35,14 @@ export default async function data(view, m, stale) {
   const t = state.meta?.tables[name];
   if (!t) { view.innerHTML = '<div class="card"><div class="empty">Không có bảng này</div></div>'; return; }
   const q = { page: 1, size: 20, sort: t.defaultSort || t.pk[0], dir: t.defaultDir || 'asc', q: '' };
+  const editable = canTable(name);
 
   view.innerHTML = `
     <div class="page-head"><div><h1>${esc(t.label)} <code class="muted" style="font-size:14px">${name}</code></h1><p>${esc(t.desc)}</p></div>
-      <button class="btn primary" id="add">✚ Thêm mới</button></div>
+      ${editable ? '<button class="btn primary" id="add">✚ Thêm mới</button>' : ''}</div>
+    ${editable ? '' : state.me.user
+      ? `<div class="notice">🔒 Vai trò ${esc(roleLabel(state.me.user.VaiTro))} chỉ được xem bảng này.</div>`
+      : guestNote('Bạn đang xem với tư cách khách. Đăng nhập để thêm, sửa, xóa dữ liệu.')}
     <div class="card">
       <div class="card-head"><input class="search" id="q" type="search" placeholder="Tìm kiếm…"><span class="spacer"></span>
         <span class="muted small">Khóa chính: <code>${t.pk.join(', ')}</code></span></div>
@@ -52,9 +56,9 @@ export default async function data(view, m, stale) {
     const cols = t.columns;
     const arrow = (c) => (q.sort === c ? `<span class="arrow">${q.dir === 'asc' ? '▲' : '▼'}</span>` : '');
     view.querySelector('#tbl').innerHTML = res.rows.length ? `<div class="table-wrap"><table class="tbl">
-      <thead><tr>${cols.map((c) => `<th class="sortable ${['int', 'money', 'decimal'].includes(c.type) && !c.fk ? 'num' : ''}" data-sort="${c.name}">${esc(c.label)}${arrow(c.name)}</th>`).join('')}<th></th></tr></thead>
+      <thead><tr>${cols.map((c) => `<th class="sortable ${['int', 'money', 'decimal'].includes(c.type) && !c.fk ? 'num' : ''}" data-sort="${c.name}">${esc(c.label)}${arrow(c.name)}</th>`).join('')}${editable ? '<th></th>' : ''}</tr></thead>
       <tbody>${res.rows.map((r, i) => `<tr>${cols.map((c) => `<td class="${['int', 'money', 'decimal'].includes(c.type) && !c.fk ? 'num' : ''}">${cellHtml(name, c, r)}</td>`).join('')}
-        <td class="actions"><button class="btn sm link" data-edit="${i}">Sửa</button><button class="btn sm link danger" data-del="${i}">Xóa</button></td></tr>`).join('')}</tbody>
+        ${editable ? `<td class="actions"><button class="btn sm link" data-edit="${i}">Sửa</button><button class="btn sm link danger" data-del="${i}">Xóa</button></td>` : ''}</tr>`).join('')}</tbody>
     </table></div>` : '<div class="empty">Không có bản ghi nào</div>';
     const pages = Math.max(1, Math.ceil(res.total / q.size));
     view.querySelector('#pager').innerHTML = `<span>${res.total} bản ghi</span><span class="spacer"></span>
@@ -138,6 +142,6 @@ export default async function data(view, m, stale) {
 
   let timer;
   view.querySelector('#q').oninput = (e) => { clearTimeout(timer); timer = setTimeout(() => { q.q = e.target.value; q.page = 1; load(); }, 250); };
-  view.querySelector('#add').onclick = () => openForm();
+  if (editable) view.querySelector('#add').onclick = () => openForm();
   await load();
 }

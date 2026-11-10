@@ -1,6 +1,6 @@
 // Nghiệp vụ bán vé kèm hành lý — toàn bộ chạy trong một transaction ở máy chủ (Phụ lục A.1).
 import { api, esc, money, dt, label, seatMap, toast, fillBar } from '../lib.js';
-import { refreshCounts } from '../app.js';
+import { refreshCounts, canAction, state, guestNote } from '../app.js';
 import { clearOptionCache } from './data.js';
 
 // Phí quá cước G4 (giống server/rules.js) để hiển thị trước khi lưu
@@ -17,6 +17,9 @@ export default async function sell(view, m, stale) {
   view.innerHTML = `
     <div class="page-head"><div><h1>Bán vé</h1>
       <p>Chọn chuyến, ghế và hành khách. Vé và hành lý được ghi trong <b>một transaction</b>: nếu một kiện hành lý vi phạm (R7, R8) hoặc ghế đã bán (R3) thì toàn bộ bị hủy.</p></div></div>
+    ${canAction('ban-ve') ? '' : state.me.user
+      ? '<div class="notice">🔒 Vai trò của bạn không có quyền bán vé. Bạn vẫn xem được sơ đồ ghế và tính thử chi phí.</div>'
+      : guestNote('Bạn đang xem với tư cách khách: xem được sơ đồ ghế và tính thử chi phí, cần đăng nhập vai trò Bán vé để xuất vé.')}
     <div class="grid cols-main">
       <div class="stack">
         <div class="card"><div class="card-head"><div><h2>1. Chọn chuyến bay</h2><p>${chuyen.length} chuyến còn mở bán (chưa khởi hành, không hủy)</p></div></div>
@@ -53,7 +56,7 @@ export default async function sell(view, m, stale) {
             <div id="bags"></div><button type="button" class="btn sm" id="addBag">+ Thêm kiện</button></div>
           <div id="summary"></div>
           <div class="form-error" id="err" hidden></div>
-          <button class="btn primary" style="justify-content:center" id="submit">Xác nhận bán vé</button>
+          <button class="btn primary" style="justify-content:center" id="submit" ${canAction('ban-ve') ? '' : 'disabled'}>Xác nhận bán vé</button>
         </div>
       </form>
     </div>`;

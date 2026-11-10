@@ -1,6 +1,7 @@
 // Trang truy vấn Q1–Q5 (mục 2.3 của báo cáo).
 import { api, esc, money, num, dt, date, monthLabel, badge, table, fillBar, sqlBlock, stackedBars, toast, label, VAI_TRO_LABEL, pad } from '../lib.js';
 import { REVENUE_SERIES } from './overview.js';
+import { canAction } from '../app.js';
 
 const INFO = {
   1: ['Q1 · Tỉ lệ lấp đầy', 'Liệt kê các chuyến bay trong một khoảng ngày cùng số vé đã bán và tỉ lệ lấp đầy (số vé / số ghế), sắp xếp giảm dần theo tỉ lệ lấp đầy.'],
@@ -176,7 +177,7 @@ async function q5(el, stale) {
     { label: 'Còn lại', align: 'num', render: (r) => (r.SoNgayConLai < 0 ? `<span style="color:var(--bad)">quá ${-r.SoNgayConLai} ngày</span>` : `${r.SoNgayConLai} ngày`) },
     { label: 'Tình trạng', render: (r) => badge(r.TinhTrang) },
     { label: 'Chuyến sắp tới', align: 'num', key: 'SoChuyenSapToi' },
-    ...(actions ? [{ label: '', align: 'actions', render: (r) => `<button class="btn sm" data-bd="${esc(r.SoHieuMB)}">Ghi nhận bảo dưỡng</button>` }] : []),
+    ...(actions && canAction('bao-duong') ? [{ label: '', align: 'actions', render: (r) => `<button class="btn sm" data-bd="${esc(r.SoHieuMB)}">Ghi nhận bảo dưỡng</button>` }] : []),
   ];
   el.innerHTML = `
     <div class="card" style="margin-bottom:16px"><div class="card-head"><div><h2 style="color:var(--bad)">Tàu bay quá hạn bảo dưỡng (${d.quaHan.length})</h2>

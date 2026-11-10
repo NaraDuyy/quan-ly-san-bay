@@ -12,11 +12,32 @@ Toàn bộ thiết kế trong báo cáo được cài đặt và chạy được
 ## Triển khai công khai (Render, miễn phí)
 
 1. Bấm nút **Deploy to Render** ở trên, đăng nhập Render bằng tài khoản GitHub.
-2. Render đọc `render.yaml`, chọn gói **Free**, bấm **Deploy Blueprint**. Sau vài phút sẽ có địa chỉ dạng `https://quan-ly-san-bay-xxxx.onrender.com`.
+2. Render đọc `render.yaml`, chọn gói **Free**, nhập hai biến `ADMIN_PASSWORD` và `DEMO_PASSWORD` (mật khẩu tài khoản mặc định), bấm **Deploy Blueprint**. Sau vài phút sẽ có địa chỉ dạng `https://quan-ly-san-bay-xxxx.onrender.com`.
 3. Mỗi lần `git push` lên nhánh `main`, Render tự build và triển khai lại.
 
 Lưu ý gói miễn phí: máy chủ ngủ sau 15 phút không có truy cập (lần mở đầu tiên chờ khoảng 1 phút),
-và ổ đĩa không lưu lâu dài — mỗi lần khởi động lại, dữ liệu được nạp lại từ đầu. Mọi người truy cập đều có thể sửa dữ liệu demo.
+và ổ đĩa không lưu lâu dài — mỗi lần khởi động lại, dữ liệu và tài khoản tạo thêm được nạp lại từ đầu.
+Vì vậy trên Render nên đặt `ADMIN_PASSWORD` / `DEMO_PASSWORD`; nếu bỏ trống, mỗi lần khởi động máy chủ sẽ sinh mật khẩu ngẫu nhiên mới (xem trong tab **Logs**).
+
+## Tài khoản & phân quyền
+
+Khách chưa đăng nhập **chỉ xem**: mọi trang, truy vấn Q1–Q5, báo cáo thiết kế, thử vi phạm ràng buộc (luôn ROLLBACK).
+Muốn thêm / sửa / xóa phải đăng nhập; mỗi tài khoản có một vai trò:
+
+| Vai trò | Tài khoản mặc định | Được thêm / sửa / xóa | Nghiệp vụ |
+|---|---|---|---|
+| Quản trị | `quantri` | Cả 15 bảng | Bán vé, đổi trạng thái chuyến, ghi nhận bảo dưỡng, nạp lại dữ liệu mẫu, **quản lý tài khoản** |
+| Bán vé | `banve` | HANHKHACH, VE, HANHLY, SUDUNGDICHVU | Bán vé |
+| Điều phối | `dieuphoi` | CHUYENBAY, MAYBAY, TUYENBAY, CONG, PHANCONG | Đổi trạng thái chuyến, ghi nhận bảo dưỡng |
+| Kế toán | `ketoan` | MUCLUONG, THULAO, DICHVU | Xem lương (Q2), doanh thu (Q4) |
+
+- Mật khẩu: `quantri` dùng biến môi trường `ADMIN_PASSWORD`, ba tài khoản còn lại dùng `DEMO_PASSWORD`.
+  Chạy trên máy mà không đặt biến thì mật khẩu được sinh ngẫu nhiên khi tạo CSDL, in ra màn hình và lưu ở `data/tai-khoan.txt` (không đưa lên git).
+- Quản trị tạo / khóa / đổi vai trò / đặt lại mật khẩu tài khoản ở trang **Tài khoản & phân quyền**; luôn phải còn ít nhất một Quản trị đang hoạt động.
+- Mỗi người tự đổi mật khẩu ở góc dưới thanh menu. Quên mật khẩu quản trị: `npm run dat-mat-khau -- quantri <mật khẩu mới>`.
+- Bảo mật: mật khẩu băm bằng scrypt; phiên đăng nhập lưu ở cookie `HttpOnly`, `SameSite=Lax` (thêm `Secure` khi chạy HTTPS), hết hạn sau 8 giờ không dùng;
+  sai mật khẩu quá 10 lần / 15 phút bị tạm khóa theo IP; máy chủ kiểm tra quyền ở mọi API ghi (giao diện chỉ ẩn nút).
+- Bảng `TAIKHOAN` phục vụ riêng cho web (không thuộc 15 bảng của báo cáo) và được giữ lại khi nạp lại dữ liệu mẫu.
 
 ![ERD](docs/erd.png)
 
@@ -55,6 +76,7 @@ Các lệnh khác:
 | `npm run export:mysql` | Xuất `database/mysql/04_seed.sql` từ cùng bộ sinh dữ liệu |
 | `npm test` | Chạy kiểm thử API (dữ liệu mẫu, R1–R10, Q1–Q5, bán vé, CRUD) |
 | `npm run dev` | Chạy và tự khởi động lại khi sửa mã |
+| `npm run dat-mat-khau -- <tài khoản> <mật khẩu>` | Đặt lại mật khẩu một tài khoản |
 
 > Với khối lượng kế hoạch (40 hành khách, mỗi khách tối đa 1 vé/chuyến theo R2), một chuyến có nhiều nhất 40 vé,
 > nên tỉ lệ lấp đầy Q1 chỉ vài phần trăm. Muốn thấy chuyến gần đầy, dùng `npm run seed:lon` hoặc chọn “Quy mô lớn” trên trang Tổng quan.
@@ -95,6 +117,7 @@ mysql -u root -p < database/mysql/03_queries.sql
 │   ├── schema.sql        # Lược đồ + trigger trên SQLite (bản web)
 │   ├── seed.js           # Sinh dữ liệu mẫu theo mục 9, xuất script MySQL
 │   ├── rules.js          # Giả định G1–G8, phí quá cước, kiểm tra R9, sơ đồ ghế
+│   ├── auth.js           # Tài khoản, đăng nhập, vai trò và phân quyền
 │   ├── meta.js           # Siêu dữ liệu 15 bảng cho màn hình quản trị
 │   ├── queries.js        # Q1–Q5
 │   └── routes/           # crud.js, ops.js (nghiệp vụ), constraints.js (R1–R10)

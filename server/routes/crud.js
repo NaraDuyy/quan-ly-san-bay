@@ -3,10 +3,10 @@ const express = require('express');
 const { TABLES, DISPLAY, OPTION_ORDER } = require('../meta');
 const { tx } = require('../db');
 const { phiQuaCan, kiemTraR9, TRANG_THAI_CAN_TO_PHUC_VU, fmtDateTime } = require('../rules');
+const { HttpError, requireTable } = require('../auth');
 
-class HttpError extends Error {
-  constructor(status, message) { super(message); this.status = status; }
-}
+// Quyền ghi theo bảng (xem ROLES trong server/auth.js)
+const canWrite = requireTable((req) => req.params.name.toUpperCase());
 
 function getTable(name) {
   const t = TABLES[name];
@@ -165,7 +165,7 @@ module.exports = function crudRouter(db) {
     res.json(rows);
   });
 
-  r.post('/:name', (req, res) => {
+  r.post('/:name', canWrite, (req, res) => {
     const name = req.params.name.toUpperCase();
     const t = getTable(name);
     const row = {};
@@ -184,7 +184,7 @@ module.exports = function crudRouter(db) {
     res.status(201).json({ ok: true, pk });
   });
 
-  r.put('/:name', (req, res) => {
+  r.put('/:name', canWrite, (req, res) => {
     const name = req.params.name.toUpperCase();
     const t = getTable(name);
     const w = pkWhere(t, req.body.pk);
@@ -206,7 +206,7 @@ module.exports = function crudRouter(db) {
     res.json({ ok: true, changed: cols.length });
   });
 
-  r.delete('/:name', (req, res) => {
+  r.delete('/:name', canWrite, (req, res) => {
     const name = req.params.name.toUpperCase();
     const t = getTable(name);
     const w = pkWhere(t, req.body.pk);
@@ -218,4 +218,3 @@ module.exports = function crudRouter(db) {
   return r;
 };
 
-module.exports.HttpError = HttpError;
