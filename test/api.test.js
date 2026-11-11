@@ -152,7 +152,10 @@ test('vai trò Bán vé: được bán vé, không được sửa chuyến bay',
   const chuyen = (await get('/chuyen-mo-ban'))[0];
   const ct = await get(`/chuyen/${chuyen.MaChuyen}`);
   const ghe = ct.ghe.phoThong.find((g) => !ct.ghe.daBan.includes(g));
-  const ban = await send('POST', '/ban-ve', { MaChuyen: chuyen.MaChuyen, HangGhe: 'PHO_THONG', SoGhe: ghe, MaHK: 40 }, c);
+  // chọn hành khách chưa có vé trên chuyến này (R2)
+  const daCo = new Set(ct.ve.map((v) => v.MaHK));
+  const maHK = [...Array(40).keys()].map((i) => i + 1).find((id) => !daCo.has(id));
+  const ban = await send('POST', '/ban-ve', { MaChuyen: chuyen.MaChuyen, HangGhe: 'PHO_THONG', SoGhe: ghe, MaHK: maHK }, c);
   assert.equal(ban.status, 201, JSON.stringify(ban.body));
   const sua = await send('PUT', '/tables/CHUYENBAY', { pk: { MaChuyen: chuyen.MaChuyen }, data: { GiaVeCoBan: 1 } }, c);
   assert.equal(sua.status, 403);
@@ -217,4 +220,25 @@ test('nạp lại dữ liệu mẫu giữ nguyên tài khoản', async () => {
   assert.equal((await send('POST', '/reset', { scale: 'kehoach' })).status, 200);
   assert.equal((await get('/accounts', admin)).length, truoc);
   assert.deepEqual((await get('/tables')).counts, PLAN);
+});
+
+test('mật khẩu mặc định đồng bộ theo biến môi trường, bỏ ký tự thừa khi sao chép', () => {
+  const { open } = require('../server/db');
+  const { verifyPassword } = require('../server/auth');
+  const db = open(':memory:');
+  const giu = { a: process.env.ADMIN_PASSWORD, d: process.env.DEMO_PASSWORD };
+  try {
+    delete process.env.ADMIN_PASSWORD; delete process.env.DEMO_PASSWORD;
+    initAccounts(db, { log: false }); // lần đầu: mật khẩu ngẫu nhiên
+    process.env.ADMIN_PASSWORD = ' `Abc-12345678` ';
+    process.env.DEMO_PASSWORD = '"demo-87654321"\n';
+    initAccounts(db, { log: false }); // khởi động lại sau khi đặt biến
+    const hash = (u) => db.prepare('SELECT MatKhauHash FROM TAIKHOAN WHERE TenDangNhap = ?').get(u).MatKhauHash;
+    assert.ok(verifyPassword('Abc-12345678', hash('quantri')));
+    assert.ok(verifyPassword('demo-87654321', hash('banve')));
+    assert.ok(verifyPassword('demo-87654321', hash('ketoan')));
+  } finally {
+    process.env.ADMIN_PASSWORD = giu.a; process.env.DEMO_PASSWORD = giu.d;
+    db.close();
+  }
 });
