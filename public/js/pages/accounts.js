@@ -38,7 +38,7 @@ export default async function accounts(view, m, stale) {
         ], rows)}</div></div>
 
       <div class="card" style="margin-top:16px"><div class="card-head"><div><h2>Bảng phân quyền theo vai trò</h2>
-        <p>Mọi vai trò (và khách) đều xem được tất cả các trang, truy vấn Q1–Q5 và thử vi phạm ràng buộc.</p></div></div>
+        <p>Mọi vai trò (và khách) đều xem được tất cả các trang và truy vấn Q1–Q5.</p></div></div>
         <div class="card-body flush">${table([
           { label: 'Vai trò', render: (r) => `<b>${esc(r.label)}</b><span class="fk-sub">${esc(r.desc)}</span>` },
           { label: 'Được thêm / sửa / xóa', render: (r) => `<div class="perm-list">${tablesOf(r)}</div>` },

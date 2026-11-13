@@ -21,7 +21,7 @@ Vì vậy trên Render nên đặt `ADMIN_PASSWORD` / `DEMO_PASSWORD`; nếu b�
 
 ## Tài khoản & phân quyền
 
-Khách chưa đăng nhập **chỉ xem**: mọi trang, truy vấn Q1–Q5, báo cáo thiết kế, thử vi phạm ràng buộc (luôn ROLLBACK).
+Khách chưa đăng nhập **chỉ xem**: mọi trang và truy vấn Q1–Q5.
 Muốn thêm / sửa / xóa phải đăng nhập; mỗi tài khoản có một vai trò:
 
 | Vai trò | Tài khoản mặc định | Được thêm / sửa / xóa | Nghiệp vụ |
@@ -49,9 +49,10 @@ Muốn thêm / sửa / xóa phải đăng nhập; mỗi tài khoản có một v
 | **Q1 – Q5** | Năm truy vấn trong báo cáo, có tham số và hiển thị kèm câu lệnh SQL. |
 | **Bán vé** | Chọn chuyến, chọn ghế trên sơ đồ, khách cũ hoặc khách mới, thêm hành lý (phí quá cước tính trực tiếp theo G4). Vé, khách và hành lý được ghi trong **một transaction**. |
 | **Chi tiết chuyến** | Đổi trạng thái (R9), phân công / gỡ nhân viên (R10), danh sách vé, sơ đồ ghế. |
-| **Ràng buộc R1–R10** | Kiểm tra dữ liệu hiện có, nút **Thử vi phạm** cho từng ràng buộc (chạy trong transaction rồi luôn ROLLBACK). |
-| **Báo cáo thiết kế** | Giả định G1–G8, thực thể, ERD, lược đồ quan hệ, chuẩn hóa, từ điển dữ liệu. |
 | **Quản lý dữ liệu** | Thêm / sửa / xóa / tìm kiếm / sắp xếp cho cả 15 bảng; lỗi ràng buộc được báo bằng thông báo nghiệp vụ. |
+| **Tài khoản & phân quyền** | (Quản trị) tạo, khóa, đổi vai trò, đặt lại mật khẩu tài khoản. |
+
+Danh sách chức năng chi tiết và kịch bản demo khi báo cáo: [docs/CHUC-NANG-VA-DEMO.md](docs/CHUC-NANG-VA-DEMO.md).
 
 ## Chạy chương trình
 
@@ -120,7 +121,7 @@ mysql -u root -p < database/mysql/03_queries.sql
 │   ├── auth.js           # Tài khoản, đăng nhập, vai trò và phân quyền
 │   ├── meta.js           # Siêu dữ liệu 15 bảng cho màn hình quản trị
 │   ├── queries.js        # Q1–Q5
-│   └── routes/           # crud.js, ops.js (nghiệp vụ), constraints.js (R1–R10)
+│   └── routes/           # crud.js, ops.js (nghiệp vụ), constraints.js (API thử vi phạm R1–R10, dùng trong kiểm thử)
 ├── public/               # Giao diện (HTML/CSS/JS thuần, không cần build)
 ├── database/mysql/       # Bản cài đặt MySQL 8
 ├── test/                 # Kiểm thử bằng node:test

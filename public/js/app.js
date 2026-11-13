@@ -5,8 +5,6 @@ import queries from './pages/queries.js';
 import data from './pages/data.js';
 import sell from './pages/sell.js';
 import flight from './pages/flight.js';
-import constraints from './pages/constraints.js';
-import design from './pages/design.js';
 import accounts from './pages/accounts.js';
 
 export const state = { meta: null, counts: {}, me: { user: null, perms: { tables: [], actions: [] }, roles: {} } };
@@ -26,8 +24,6 @@ const ROUTES = [
   { re: /^\/du-lieu\/(\w+)$/, page: data, crumb: (m) => `Quản lý dữ liệu · <b>${esc(state.meta?.tables[m[1]]?.label || m[1])}</b>` },
   { re: /^\/ban-ve$/, page: sell, crumb: () => 'Nghiệp vụ · <b>Bán vé</b>' },
   { re: /^\/chuyen\/(\d+)$/, page: flight, crumb: (m) => `Chuyến bay · <b>#${m[1]}</b>` },
-  { re: /^\/rang-buoc$/, page: constraints, crumb: () => 'Thiết kế · <b>Ràng buộc toàn vẹn</b>' },
-  { re: /^\/thiet-ke$/, page: design, crumb: () => 'Thiết kế · <b>Báo cáo CSDL</b>' },
   { re: /^\/tai-khoan$/, page: accounts, crumb: () => 'Hệ thống · <b>Tài khoản & phân quyền</b>' },
 ];
 
@@ -43,8 +39,6 @@ function renderNav(path) {
       ${link('#/q/1', '①', 'Q1 · Tỉ lệ lấp đầy')}${link('#/q/2', '②', 'Q2 · Lương tháng')}
       ${link('#/q/3', '③', 'Q3 · Hồ sơ hành khách')}${link('#/q/4', '④', 'Q4 · Doanh thu')}
       ${link('#/q/5', '⑤', 'Q5 · Bảo dưỡng')}</div>
-    <div class="nav-group"><div class="nav-title">Thiết kế CSDL</div>
-      ${link('#/thiet-ke', '▤', 'Báo cáo thiết kế')}${link('#/rang-buoc', '⛨', 'Ràng buộc R1–R10')}</div>
     ${canAction('tai-khoan') ? `<div class="nav-group"><div class="nav-title">Hệ thống</div>${link('#/tai-khoan', '⚿', 'Tài khoản & phân quyền')}</div>` : ''}
     ${Object.entries(groups).map(([g, items]) => `<div class="nav-group"><div class="nav-title">${esc(g)}</div>
       ${items.map(([name, def]) => link(`#/du-lieu/${name}`, '·', esc(def.label), `<span class="count">${state.counts[name] ?? ''}</span>`)).join('')}</div>`).join('')}`;
