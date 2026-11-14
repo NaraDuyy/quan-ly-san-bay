@@ -53,6 +53,7 @@ Muốn thêm / sửa / xóa phải đăng nhập; mỗi tài khoản có một v
 | **Tài khoản & phân quyền** | (Quản trị) tạo, khóa, đổi vai trò, đặt lại mật khẩu tài khoản. |
 
 Danh sách chức năng chi tiết và kịch bản demo khi báo cáo: [docs/CHUC-NANG-VA-DEMO.md](docs/CHUC-NANG-VA-DEMO.md).
+Hướng dẫn đọc lược đồ ER, lược đồ quan hệ và các giả định thêm / bớt: [docs/HUONG-DAN-LUOC-DO-VA-GIA-DINH.md](docs/HUONG-DAN-LUOC-DO-VA-GIA-DINH.md).
 
 ## Chạy chương trình
 

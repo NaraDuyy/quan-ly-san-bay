@@ -4,6 +4,7 @@ Web: https://quan-ly-san-bay.onrender.com/ · Mã nguồn: https://github.com/Na
 
 Web cài đặt đúng thiết kế trong báo cáo *Thiết kế CSDL hệ thống quản lý sân bay*: 15 bảng, ràng buộc R1–R10,
 truy vấn Q1–Q5 và dữ liệu mẫu theo kế hoạch mục 9. Phần 1 liệt kê toàn bộ chức năng; phần 2 là gợi ý những gì nên demo.
+Cách đọc ERD, lược đồ quan hệ và các giả định thêm / bớt: xem [HUONG-DAN-LUOC-DO-VA-GIA-DINH.md](HUONG-DAN-LUOC-DO-VA-GIA-DINH.md).
 
 ---
 
