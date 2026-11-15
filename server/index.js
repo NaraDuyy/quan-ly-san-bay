@@ -22,7 +22,11 @@ function createApp(db) {
   app.use('/api/constraints', constraintsRouter(db));
   app.use('/api', opsRouter(db));
   app.use('/api', (req, res) => res.status(404).json({ error: 'Không có API này' }));
-  app.use(express.static(path.join(__dirname, '..', 'public')));
+  // no-cache: trình duyệt luôn hỏi lại máy chủ (dùng ETag, file không đổi thì trả 304),
+  // nên sau mỗi lần triển khai người dùng thấy ngay bản mới mà không phải xóa cache
+  app.use(express.static(path.join(__dirname, '..', 'public'), {
+    setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache'),
+  }));
 
   // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => {
