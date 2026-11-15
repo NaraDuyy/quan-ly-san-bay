@@ -1,17 +1,22 @@
-// Nhật ký SQL: ghi lại lần lượt mọi câu lệnh chạy trên CSDL để xem trực tiếp ở trang "Nhật ký SQL".
-// Mỗi trình duyệt có một mã (cookie sb_cid) nên hai tab của cùng trình duyệt thấy chung một nhật ký,
-// còn người dùng khác không thấy thao tác của nhau (trừ Quản trị chọn xem tất cả).
+// Nhật ký SQL: ghi lại lần lượt MỌI câu lệnh chạy trên CSDL để xem trực tiếp ở trang "Nhật ký SQL".
+// - Mỗi trình duyệt có một mã (cookie sb_cid) nên hai tab của cùng trình duyệt thấy chung một nhật ký,
+//   còn người dùng khác không thấy thao tác của nhau (trừ Quản trị chọn xem tất cả).
+// - Câu lệnh do máy chủ tự chạy (khởi động, tạo CSDL, nạp dữ liệu mẫu) thuộc "hệ thống", ai cũng thấy.
+// - Trong chế độ gộp (nạp dữ liệu mẫu), các lần chạy liên tiếp của cùng một câu được gộp thành "× N lần".
 const crypto = require('node:crypto');
 const { AsyncLocalStorage } = require('node:async_hooks');
 const express = require('express');
-const { friendlyError } = require('./db');
 
-const MAX_ENTRIES = 3000;
+const MAX_ENTRIES = 20000;
 const CID_COOKIE = 'sb_cid';
+const SYSTEM = 'system';
 const als = new AsyncLocalStorage();
 const entries = [];
 let nextId = 1;
 let nextReq = 1;
+
+// db.js nạp module này nên lấy friendlyError khi cần, tránh vòng phụ thuộc lúc khởi tạo
+const friendlyError = (e) => require('./db').friendlyError(e);
 
 // Tên thao tác hiển thị theo đường dẫn API
 const ACTIONS = [
@@ -64,20 +69,22 @@ function cleanParams(args) {
 }
 
 function push(entry) {
-  entries.push({ id: nextId++, ...entry });
+  const id = nextId++;
+  entries.push({ id, key: id, ...entry }); // key cố định; id tăng lại khi dòng được gộp thêm
   if (entries.length > MAX_ENTRIES) entries.splice(0, entries.length - MAX_ENTRIES);
 }
+
+const userOf = (store) => store.user || store.req?.user?.TenDangNhap || null;
+const baseOf = (store) => ({
+  time: Date.now(), cid: store.cid, req: store.reqId, method: store.method, path: store.path,
+  action: store.action, user: userOf(store),
+});
 
 function record(sql, args, fn) {
   const store = als.getStore();
   if (!store || store.skip) return fn();
-  if (store.suppress) { store.suppressed++; return fn(); }
   const t0 = process.hrtime.bigint();
-  const base = {
-    time: Date.now(), cid: store.cid, req: store.reqId, method: store.method, path: store.path,
-    action: store.action, user: store.req.user?.TenDangNhap || null, sql: sql.trim(),
-    params: cleanParams(args), kind: kindOf(sql),
-  };
+  const base = { ...baseOf(store), sql: sql.trim(), params: cleanParams(args), kind: kindOf(sql) };
   try {
     const r = fn();
     const ms = Number(process.hrtime.bigint() - t0) / 1e6;
@@ -85,6 +92,17 @@ function record(sql, args, fn) {
     if (Array.isArray(r)) result = { rows: r.length };
     else if (r && typeof r === 'object' && 'changes' in r) result = { changes: Number(r.changes), lastId: Number(r.lastInsertRowid) };
     else if (base.kind === 'read') result = { rows: r === undefined ? 0 : 1 };
+    // Chế độ gộp: lần chạy lặp lại của đúng câu ngay trước đó được cộng dồn vào dòng cũ
+    const last = entries.at(-1);
+    if (store.batch && last && last.req === base.req && last.sql === base.sql && !last.error && last.result && result) {
+      last.count = (last.count || 1) + 1;
+      last.ms += ms;
+      last.lastParams = base.params;
+      if ('rows' in result) last.result.rows += result.rows;
+      if ('changes' in result) { last.result.changes += result.changes; last.result.lastId = result.lastId; }
+      last.id = nextId++; // đánh số lại để trang nhật ký nhận ra dòng vừa thay đổi
+      return r;
+    }
     push({ ...base, ms, result });
     return r;
   } catch (e) {
@@ -115,34 +133,35 @@ function instrument(db) {
   return db;
 }
 
-// Chạy fn mà không ghi từng câu (ví dụ nạp lại hàng nghìn dòng dữ liệu mẫu), chỉ ghi một dòng tóm tắt
-function quietly(note, fn) {
-  const store = als.getStore();
-  if (!store || store.skip) return fn();
-  store.suppress = true; store.suppressed = 0;
-  try { return fn(); } finally {
-    store.suppress = false;
-    push({
-      time: Date.now(), cid: store.cid, req: store.reqId, method: store.method, path: store.path, action: store.action,
-      user: store.req.user?.TenDangNhap || null, kind: 'note', sql: `-- ${note}: ${store.suppressed} câu lệnh (ẩn bớt cho gọn)`, params: [],
-    });
-  }
-}
-
 // Ghi một dòng chú thích vào nhật ký (bước xử lý ở máy chủ không chạy SQL)
 function note(text) {
   const store = als.getStore();
   if (!store || store.skip) return;
-  push({
-    time: Date.now(), cid: store.cid, req: store.reqId, method: store.method, path: store.path, action: store.action,
-    user: store.req.user?.TenDangNhap || null, kind: 'note', sql: `-- ${text}`, params: [],
-  });
+  push({ ...baseOf(store), kind: 'note', sql: `-- ${text}`, params: [] });
+}
+
+// Chạy fn ở chế độ gộp: vẫn ghi MỌI câu lệnh, câu lặp lại liên tiếp gộp thành "× N lần"
+function batched(text, fn) {
+  const store = als.getStore();
+  if (!store || store.skip) return fn();
+  if (text) note(text);
+  const prev = store.batch;
+  store.batch = true;
+  try { return fn(); } finally { store.batch = prev; }
+}
+
+// Chạy fn như một thao tác của "hệ thống" (không thuộc yêu cầu nào), ví dụ lúc khởi động máy chủ
+function system(action, fn) {
+  const store = { cid: SYSTEM, reqId: nextReq++, method: 'SYSTEM', path: '(máy chủ)', action, user: 'hệ thống', batch: true };
+  return als.run(store, fn);
 }
 
 function cookieValue(header = '', name) {
   const m = header.split(';').map((p) => p.trim()).find((p) => p.startsWith(name + '='));
   return m ? decodeURIComponent(m.slice(name.length + 1)) : null;
 }
+
+const isLogPath = (path) => path.startsWith('/api/sql-log');
 
 // Middleware: gắn mã trình duyệt và ngữ cảnh yêu cầu cho mọi câu SQL chạy trong yêu cầu này
 function contextMiddleware(req, res, next) {
@@ -153,11 +172,8 @@ function contextMiddleware(req, res, next) {
   }
   req.clientId = cid;
   const path = req.originalUrl.split('?')[0];
-  const store = {
-    req, cid, reqId: nextReq++, method: req.method, path, action: actionOf(req.method, path),
-    // Bản thân trang nhật ký hỏi liên tục — không ghi lại để khỏi tự làm đầy nhật ký
-    skip: path.startsWith('/api/sql-log'),
-  };
+  // Trang nhật ký hỏi máy chủ mỗi giây nhưng không chạy câu SQL nào (xem sessionMiddleware), nên không có gì để ghi
+  const store = { req, cid, reqId: nextReq++, method: req.method, path, action: actionOf(req.method, path), skip: isLogPath(path) };
   als.run(store, next);
 }
 
@@ -165,15 +181,18 @@ function contextMiddleware(req, res, next) {
 function router() {
   const r = express.Router();
   r.get('/', (req, res) => {
+    const isAdmin = req.sessionRole === 'QUAN_TRI';
     const after = Math.max(0, parseInt(req.query.after, 10) || 0);
-    const all = req.query.all === '1' && req.user?.VaiTro === 'QUAN_TRI';
-    const mine = (e) => all || e.cid === req.clientId;
-    const strip = ({ cid, ...e }) => ({ ...e, mine: cid === req.clientId });
-    let list = entries.filter((e) => e.id > after && mine(e));
-    if (!after) list = list.slice(-400); // lần đầu mở trang: chỉ lấy phần gần nhất
-    res.json({ entries: list.slice(0, 1000).map(strip), last: nextId - 1, canAll: req.user?.VaiTro === 'QUAN_TRI' });
+    const all = req.query.all === '1' && isAdmin;
+    const visible = (e) => all || e.cid === req.clientId || e.cid === SYSTEM;
+    const strip = ({ cid, raw, ...e }) => ({ ...e, mine: cid === req.clientId, system: cid === SYSTEM });
+    let list = entries.filter((e) => e.id > after && visible(e));
+    if (!after) list = list.slice(-1500); // lần đầu mở trang: phần gần nhất
+    // id của dòng gộp có thể tăng — sắp lại theo id để trang nhận đúng thứ tự
+    list.sort((a, b) => a.id - b.id);
+    res.json({ entries: list.slice(0, 2000).map(strip), last: nextId - 1, canAll: isAdmin });
   });
   return r;
 }
 
-module.exports = { instrument, quietly, note, contextMiddleware, router, actionOf };
+module.exports = { instrument, note, batched, system, contextMiddleware, router, actionOf, isLogPath };

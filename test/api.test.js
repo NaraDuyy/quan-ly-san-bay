@@ -277,12 +277,31 @@ test('nhật ký SQL ghi tuần tự câu lệnh của trình duyệt mình, che
   assert.ok(!khac.some((e) => e.action === 'Bán vé'));
 });
 
-test('nạp lại dữ liệu mẫu chỉ ghi một dòng tóm tắt', async () => {
+test('nạp lại dữ liệu mẫu ghi mọi câu lệnh, câu lặp lại gộp thành × N lần', async () => {
   const truoc = (await get('/sql-log', admin)).last;
   await send('POST', '/reset', { scale: 'kehoach' });
   const log = (await get(`/sql-log?after=${truoc}`, admin)).entries.filter((e) => e.action === 'Nạp lại dữ liệu mẫu');
-  assert.ok(log.length < 10, `ghi quá nhiều dòng: ${log.length}`);
-  assert.ok(log.some((e) => e.kind === 'note'));
+  assert.ok(log.length < 200, `quá nhiều dòng: ${log.length}`);
+  assert.ok(log.filter((e) => /^DROP TABLE/.test(e.sql)).length >= 15, 'thiếu DROP TABLE');
+  assert.ok(log.some((e) => /CREATE TABLE SANBAY/.test(e.sql)), 'thiếu câu tạo lược đồ');
+  // tổng số lần INSERT của từng bảng khớp kế hoạch mục 9
+  const soLan = (bang) => log.filter((e) => e.sql.startsWith(`INSERT INTO ${bang} `)).reduce((s, e) => s + (e.count || 1), 0);
+  for (const [bang, n] of Object.entries(PLAN)) assert.equal(soLan(bang), n, bang);
+  assert.ok(log.some((e) => e.count > 1 && e.lastParams), 'không gộp câu lặp lại');
+});
+
+test('câu lệnh của hệ thống (khởi động máy chủ) ai cũng thấy; trang nhật ký không tự chạy SQL', async () => {
+  const sqlLog = require('../server/sqllog');
+  const { open } = require('../server/db');
+  sqlLog.system('Khởi động máy chủ', () => { open(':memory:').prepare('SELECT 1 AS x').get(); });
+  const log = (await get('/sql-log')).entries.filter((e) => e.action === 'Khởi động máy chủ');
+  assert.ok(log.some((e) => e.system && /^PRAGMA foreign_keys/.test(e.sql)));
+  assert.ok(log.some((e) => e.sql === 'SELECT 1 AS x' && e.user === 'hệ thống'));
+  // gọi trang nhật ký nhiều lần không sinh thêm câu SQL nào
+  const c = await login('quantri', process.env.ADMIN_PASSWORD);
+  const a = (await get('/sql-log', c)).last;
+  for (let i = 0; i < 3; i++) await get('/sql-log', c);
+  assert.equal((await get('/sql-log', c)).last, a);
 });
 
 test('nhật ký ghi chú các bước đăng nhập không dùng SQL; Q1–Q5 trả thời gian thực hiện', async () => {

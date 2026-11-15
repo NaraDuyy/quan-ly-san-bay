@@ -72,14 +72,18 @@ Mở bằng cách bấm số hiệu chuyến ở Tổng quan, Q1 hoặc bảng C
 
 ### 1.7. Nhật ký SQL (`#/nhat-ky-sql`)
 
-- Hiện **lần lượt, theo thời gian thực** (cập nhật mỗi giây) mọi câu SQL chạy trên CSDL.
+- Hiện **lần lượt, theo thời gian thực** (cập nhật mỗi giây) **mọi** câu SQL chạy trên CSDL: thao tác của người dùng, câu kiểm tra phiên,
+  và cả câu do máy chủ tự chạy (*Khởi động máy chủ* — tạo bảng, nạp dữ liệu, tạo tài khoản; người chạy ghi là *hệ thống*).
 - Gom theo từng thao tác: giờ, tên thao tác (*Đăng nhập*, *Bán vé*, *Truy vấn Q1*…), người dùng, số câu, thời gian chạy.
 - Mỗi câu có: loại (*Đọc* / *Ghi* / *Giao tác*), câu SQL tô màu, **tham số** truyền vào dấu `?`, kết quả (số dòng đọc / thay đổi, mã mới),
   và **lỗi** nếu bị ràng buộc chặn (ví dụ *R7* ở câu `INSERT INTO HANHLY`, sau đó là `ROLLBACK`).
-- Tùy chọn: ẩn câu kiểm tra phiên đăng nhập; chỉ hiện thao tác thay đổi dữ liệu (POST / PUT / DELETE); tạm dừng; xóa màn hình.
+- Mỗi câu ghi **thời điểm thực hiện** (đến mili-giây) và **thời gian chạy**; nút **Tải CSV** lưu nhật ký ra file Excel.
+- Tùy chọn (mặc định hiện tất cả): ẩn câu kiểm tra phiên đăng nhập; chỉ hiện thao tác thay đổi dữ liệu (POST / PUT / DELETE); tạm dừng; xóa màn hình.
 - Mỗi trình duyệt chỉ thấy câu lệnh **của chính mình**, nên hai tab cùng trình duyệt thấy chung, người khác không thấy (Quản trị có thể xem tất cả).
 - Mã băm mật khẩu được che; mật khẩu gốc không bao giờ đi vào SQL (so khớp mật khẩu làm bằng scrypt ở máy chủ).
-- Nạp lại dữ liệu mẫu chỉ ghi một dòng tóm tắt thay vì hàng nghìn câu `INSERT`.
+- Nạp lại dữ liệu mẫu vẫn ghi **đủ mọi câu** (DROP TABLE, CREATE TABLE, INSERT…), nhưng câu lặp lại liên tiếp được gộp thành một dòng
+  **× N lần** kèm tham số lần đầu / lần cuối (ví dụ `INSERT INTO VE … × 300 lần`).
+- Những bước không dùng SQL (so khớp mật khẩu bằng scrypt, tạo / xóa phiên đăng nhập) có dòng **Ghi chú** để thấy rõ.
 
 ### 1.8. Khác
 

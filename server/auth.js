@@ -159,9 +159,15 @@ function sessionMiddleware(db) {
   return (req, res, next) => {
     const token = parseCookies(req.headers.cookie)[SESSION_COOKIE];
     const s = token && sessions.get(token);
-    if (s && s.expires > Date.now()) {
+    if (s && s.expires > Date.now() && sqlLog.isLogPath(req.originalUrl)) {
+      // Trang Nhật ký SQL hỏi mỗi giây: chỉ đọc vai trò đã lưu trong phiên, không chạy SQL
+      req.sessionRole = s.VaiTro;
+    } else if (s && s.expires > Date.now()) {
       const u = db.prepare('SELECT * FROM TAIKHOAN WHERE MaTK = ? AND KichHoat = 1').get(s.MaTK);
-      if (u) { req.user = u; req.sessionToken = token; s.expires = Date.now() + SESSION_TTL; }
+      if (u) {
+        req.user = u; req.sessionToken = token; req.sessionRole = u.VaiTro;
+        s.expires = Date.now() + SESSION_TTL; s.VaiTro = u.VaiTro;
+      }
       else sessions.delete(token);
     } else if (s) sessions.delete(token);
     next();
@@ -222,7 +228,7 @@ function authRouter(db) {
     if (!u.KichHoat) throw new HttpError(403, 'Tài khoản đã bị khóa');
     failures.delete(ip);
     const token = crypto.randomBytes(32).toString('base64url');
-    sessions.set(token, { MaTK: u.MaTK, expires: Date.now() + SESSION_TTL });
+    sessions.set(token, { MaTK: u.MaTK, VaiTro: u.VaiTro, expires: Date.now() + SESSION_TTL });
     setSessionCookie(req, res, token, SESSION_TTL);
     req.user = u;
     sqlLog.note('Tạo phiên đăng nhập trong bộ nhớ máy chủ, gửi cookie sb_sid cho trình duyệt (không ghi CSDL)');

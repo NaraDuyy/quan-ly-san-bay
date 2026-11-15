@@ -41,13 +41,18 @@ module.exports = { createApp };
 
 if (require.main === module) {
   const PORT = Number(process.env.PORT) || 3000;
-  // Lần chạy đầu (hoặc CSDL rỗng): tự tạo lược đồ và nạp dữ liệu mẫu
-  const db = open(DB_FILE);
-  if (!hasSchema(db) || !db.prepare('SELECT COUNT(*) AS n FROM CHUYENBAY').get().n) {
-    console.log('Chưa có dữ liệu — đang tạo CSDL và nạp dữ liệu mẫu…');
-    reseed(db);
-  }
-  initAccounts(db, { dataDir: path.dirname(DB_FILE) });
+  // Các câu SQL lúc khởi động được ghi vào Nhật ký SQL dưới tên "Khởi động máy chủ" (người dùng: hệ thống)
+  const db = sqlLog.system('Khởi động máy chủ', () => {
+    const db = open(DB_FILE);
+    // Lần chạy đầu (hoặc CSDL rỗng): tự tạo lược đồ và nạp dữ liệu mẫu
+    if (!hasSchema(db) || !db.prepare('SELECT COUNT(*) AS n FROM CHUYENBAY').get().n) {
+      console.log('Chưa có dữ liệu — đang tạo CSDL và nạp dữ liệu mẫu…');
+      sqlLog.note('CSDL chưa có dữ liệu — tạo 15 bảng và nạp dữ liệu mẫu');
+      reseed(db);
+    }
+    initAccounts(db, { dataDir: path.dirname(DB_FILE) });
+    return db;
+  });
   createApp(db).listen(PORT, () => {
     console.log(`Quản lý sân bay đang chạy tại http://localhost:${PORT}`);
   });

@@ -10,6 +10,8 @@ const SCHEMA_FILE = path.join(__dirname, 'schema.sql');
 function open(file = DB_FILE) {
   if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true });
   const db = new DatabaseSync(file);
+  // Ghi mọi câu lệnh vào Nhật ký SQL (chỉ ghi khi đang trong một yêu cầu web hoặc thao tác hệ thống)
+  require('./sqllog').instrument(db);
   db.exec('PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;');
   return db;
 }
