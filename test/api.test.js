@@ -26,7 +26,8 @@ async function login(username, password) {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }),
   });
   assert.equal(r.status, 200, `đăng nhập ${username} thất bại`);
-  return r.headers.get('set-cookie').split(';')[0];
+  // Gộp mọi cookie máy chủ trả về (phiên đăng nhập sb_sid + mã trình duyệt sb_cid)
+  return r.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');
 }
 
 const get = (p, cookie) => fetch(base + p, { headers: cookie ? { cookie } : {} }).then((r) => r.json());
@@ -241,4 +242,45 @@ test('mật khẩu mặc định đồng bộ theo biến môi trường, bỏ k
     process.env.ADMIN_PASSWORD = giu.a; process.env.DEMO_PASSWORD = giu.d;
     db.close();
   }
+});
+
+// ------------------------------------------------------------------ nhật ký SQL
+test('nhật ký SQL ghi tuần tự câu lệnh của trình duyệt mình, che mã băm mật khẩu', async () => {
+  const c = await login('banve', process.env.DEMO_PASSWORD);
+  const log = (await get('/sql-log', c)).entries;
+  const dangNhap = log.filter((e) => e.action === 'Đăng nhập');
+  assert.ok(dangNhap.some((e) => /FROM TAIKHOAN WHERE TenDangNhap = \?/.test(e.sql)), 'thiếu câu SELECT lúc đăng nhập');
+  assert.ok(!JSON.stringify(log).includes('scrypt$'), 'lộ mã băm mật khẩu');
+  // thứ tự id tăng dần
+  assert.ok(log.every((e, i) => i === 0 || e.id > log[i - 1].id));
+
+  // bán vé lỗi R7: thấy BEGIN, INSERT ... và ROLLBACK cùng lỗi
+  const truoc = (await get('/sql-log', c)).last;
+  const chuyen = (await get('/chuyen-mo-ban', c))[0];
+  const ct = await get(`/chuyen/${chuyen.MaChuyen}`, c);
+  const ghe = ct.ghe.phoThong.find((g) => !ct.ghe.daBan.includes(g));
+  const r = await send('POST', '/ban-ve', {
+    MaChuyen: chuyen.MaChuyen, HangGhe: 'PHO_THONG', SoGhe: ghe,
+    KhachMoi: { SoGiayTo: '077777777777', HoTen: 'Khách Nhật Ký', NgaySinh: '1995-05-05' },
+    HanhLy: [{ LoaiHL: 'KY_GUI', CanNangKg: 40 }],
+  }, c);
+  assert.equal(r.status, 422);
+  const banVe = (await get(`/sql-log?after=${truoc}`, c)).entries.filter((e) => e.action === 'Bán vé');
+  const seq = banVe.map((e) => e.sql.split(/\s+/)[0]);
+  // kiểm tra phiên + chuyến bay (SELECT) trước, rồi BEGIN … ROLLBACK
+  assert.ok(seq.indexOf('BEGIN') > 0, seq.join(' '));
+  assert.equal(seq.at(-1), 'ROLLBACK');
+  assert.ok(banVe.some((e) => /^INSERT INTO HANHLY/.test(e.sql) && /^R7:/.test(e.error)));
+
+  // trình duyệt khác (không có cookie) không thấy nhật ký của mình
+  const khac = (await get('/sql-log')).entries;
+  assert.ok(!khac.some((e) => e.action === 'Bán vé'));
+});
+
+test('nạp lại dữ liệu mẫu chỉ ghi một dòng tóm tắt', async () => {
+  const truoc = (await get('/sql-log', admin)).last;
+  await send('POST', '/reset', { scale: 'kehoach' });
+  const log = (await get(`/sql-log?after=${truoc}`, admin)).entries.filter((e) => e.action === 'Nạp lại dữ liệu mẫu');
+  assert.ok(log.length < 10, `ghi quá nhiều dòng: ${log.length}`);
+  assert.ok(log.some((e) => e.kind === 'note'));
 });

@@ -6,6 +6,7 @@ const { HttpError, requireAction } = require('../auth');
 const { TABLES, PLAN } = require('../meta');
 const Q = require('../queries');
 const { reseed, SCALES } = require('../seed');
+const { quietly } = require('../sqllog');
 const { G, phiQuaCan, kiemTraR9, TRANG_THAI_CAN_TO_PHUC_VU, soDoGhe, fmtDateTime, fmtDate } = require('../rules');
 
 module.exports = function opsRouter(db) {
@@ -154,7 +155,7 @@ module.exports = function opsRouter(db) {
   // ------------------------------------------------------------ nạp lại dữ liệu mẫu
   r.post('/reset', requireAction('reset'), (req, res) => {
     const scale = SCALES[req.body?.scale] ? req.body.scale : 'kehoach';
-    reseed(db, scale);
+    quietly('Xóa và tạo lại 15 bảng, nạp dữ liệu mẫu', () => reseed(db, scale));
     res.json({ ok: true, scale });
   });
 

@@ -4,15 +4,18 @@ const express = require('express');
 const { open, hasSchema, friendlyError, DB_FILE } = require('./db');
 const { reseed } = require('./seed');
 const { initAccounts, sessionMiddleware, requireJsonForWrites, authRouter, accountsRouter } = require('./auth');
+const sqlLog = require('./sqllog');
 const crudRouter = require('./routes/crud');
 const opsRouter = require('./routes/ops');
 const constraintsRouter = require('./routes/constraints');
 
 function createApp(db) {
+  sqlLog.instrument(db); // ghi lại mọi câu SQL cho trang Nhật ký SQL
   const app = express();
   app.set('trust proxy', 1); // chạy sau proxy HTTPS của Render: req.secure, req.ip đúng
   app.use(express.json({ limit: '1mb' }));
-  app.use('/api', requireJsonForWrites, sessionMiddleware(db));
+  app.use('/api', sqlLog.contextMiddleware, requireJsonForWrites, sessionMiddleware(db));
+  app.use('/api/sql-log', sqlLog.router());
   app.use('/api/auth', authRouter(db));
   app.use('/api/accounts', accountsRouter(db));
   app.use('/api/tables', crudRouter(db));

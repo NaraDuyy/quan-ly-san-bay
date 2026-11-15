@@ -51,6 +51,7 @@ Muốn thêm / sửa / xóa phải đăng nhập; mỗi tài khoản có một v
 | **Chi tiết chuyến** | Đổi trạng thái (R9), phân công / gỡ nhân viên (R10), danh sách vé, sơ đồ ghế. |
 | **Quản lý dữ liệu** | Thêm / sửa / xóa / tìm kiếm / sắp xếp cho cả 15 bảng; lỗi ràng buộc được báo bằng thông báo nghiệp vụ. |
 | **Tài khoản & phân quyền** | (Quản trị) tạo, khóa, đổi vai trò, đặt lại mật khẩu tài khoản. |
+| **Nhật ký SQL** | Hiện lần lượt, theo thời gian thực, mọi câu SQL vừa chạy (kèm tham số, số dòng, BEGIN/COMMIT/ROLLBACK, lỗi ràng buộc). Mở ở một tab, thao tác ở tab khác cùng trình duyệt. |
 
 Danh sách chức năng chi tiết và kịch bản demo khi báo cáo: [docs/CHUC-NANG-VA-DEMO.md](docs/CHUC-NANG-VA-DEMO.md).
 Hướng dẫn đọc lược đồ ER, lược đồ quan hệ và các giả định thêm / bớt: [docs/HUONG-DAN-LUOC-DO-VA-GIA-DINH.md](docs/HUONG-DAN-LUOC-DO-VA-GIA-DINH.md).

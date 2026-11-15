@@ -89,17 +89,21 @@ export function table(columns, rows, { empty = 'Không có dữ liệu', foot = 
 
 // ------------------------------------------------------------ SQL
 const KW = /\b(SELECT|FROM|WHERE|JOIN|LEFT|ON|AND|OR|NOT|GROUP BY|ORDER BY|HAVING|AS|WITH|UNION|CASE|WHEN|THEN|ELSE|END|COUNT|SUM|COALESCE|ROUND|CAST|INTEGER|DESC|ASC|IN|BETWEEN|IS|NULL|EXISTS|LIMIT|INSERT|INTO|VALUES|UPDATE|SET|DELETE|date|julianday|strftime|DISTINCT)\b/g;
-export function sqlBlock(sql, title = 'Câu lệnh SQL') {
-  const html = esc(sql).split('\n').map((line) => {
+// Tô màu từ khóa, chuỗi, tham số ($x, ?) và chú thích của một câu SQL (trả về HTML đã escape)
+export function highlightSql(sql) {
+  return esc(sql).split('\n').map((line) => {
     const i = line.indexOf('--');
     const code = i >= 0 ? line.slice(0, i) : line;
     const cmt = i >= 0 ? `<span class="cmt">${line.slice(i)}</span>` : '';
     return code
       .replace(/(&#39;[^&]*?&#39;)/g, '<span class="str">$1</span>')
-      .replace(/(\$\w+)/g, '<span class="prm">$1</span>')
+      .replace(/(\$\w+|\?)/g, '<span class="prm">$1</span>')
       .replace(KW, '<span class="kw">$1</span>') + cmt;
   }).join('\n');
-  return `<details class="sql"><summary>${esc(title)}</summary><pre>${html}</pre></details>`;
+}
+
+export function sqlBlock(sql, title = 'Câu lệnh SQL') {
+  return `<details class="sql"><summary>${esc(title)}</summary><pre>${highlightSql(sql)}</pre></details>`;
 }
 
 // ------------------------------------------------------------ toast & modal

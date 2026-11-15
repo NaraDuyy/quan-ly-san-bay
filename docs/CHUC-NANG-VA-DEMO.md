@@ -70,7 +70,18 @@ Mở bằng cách bấm số hiệu chuyến ở Tổng quan, Q1 hoặc bảng C
 - Quản trị có trang **Tài khoản & phân quyền**: tạo, khóa, đổi vai trò, đặt lại mật khẩu, xóa; luôn giữ ít nhất một Quản trị.
 - Máy chủ kiểm tra quyền ở mọi thao tác ghi; giao diện ẩn / khóa nút theo vai trò.
 
-### 1.7. Khác
+### 1.7. Nhật ký SQL (`#/nhat-ky-sql`)
+
+- Hiện **lần lượt, theo thời gian thực** (cập nhật mỗi giây) mọi câu SQL chạy trên CSDL.
+- Gom theo từng thao tác: giờ, tên thao tác (*Đăng nhập*, *Bán vé*, *Truy vấn Q1*…), người dùng, số câu, thời gian chạy.
+- Mỗi câu có: loại (*Đọc* / *Ghi* / *Giao tác*), câu SQL tô màu, **tham số** truyền vào dấu `?`, kết quả (số dòng đọc / thay đổi, mã mới),
+  và **lỗi** nếu bị ràng buộc chặn (ví dụ *R7* ở câu `INSERT INTO HANHLY`, sau đó là `ROLLBACK`).
+- Tùy chọn: ẩn câu kiểm tra phiên đăng nhập; chỉ hiện thao tác thay đổi dữ liệu (POST / PUT / DELETE); tạm dừng; xóa màn hình.
+- Mỗi trình duyệt chỉ thấy câu lệnh **của chính mình**, nên hai tab cùng trình duyệt thấy chung, người khác không thấy (Quản trị có thể xem tất cả).
+- Mã băm mật khẩu được che; mật khẩu gốc không bao giờ đi vào SQL (so khớp mật khẩu làm bằng scrypt ở máy chủ).
+- Nạp lại dữ liệu mẫu chỉ ghi một dòng tóm tắt thay vì hàng nghìn câu `INSERT`.
+
+### 1.8. Khác
 
 - Giao diện sáng / tối, dùng được trên điện thoại.
 - Bộ script **MySQL 8** trong `database/mysql/` (bảng, trigger `SIGNAL`, thủ tục R9, Q1–Q5, dữ liệu mẫu) — nộp kèm báo cáo nếu cần.
@@ -101,6 +112,9 @@ Mở bằng cách bấm số hiệu chuyến ở Tổng quan, Q1 hoặc bảng C
 - Đăng nhập `quantri` → Tổng quan → **Nạp lại dữ liệu mẫu** (đúng kế hoạch mục 9) để dữ liệu sạch và mốc ngày khớp hôm nay. Giữ đăng nhập `quantri` cho bước 1, 2 và 4.
 - Ghi sẵn mật khẩu `quantri` và mật khẩu demo ra giấy / trình quản lý mật khẩu, **không** trình chiếu chúng.
 - Nên mở thêm một tab ẩn danh để demo vai trò khách mà không phải đăng xuất.
+- **Mở trang Nhật ký SQL ở tab thứ hai** (menu *Hệ thống → Nhật ký SQL*, hoặc nút *Mở ở tab mới*), đặt cạnh tab chính hoặc chia đôi màn hình.
+  Tích *Ẩn câu kiểm tra phiên đăng nhập*; khi demo bước 3 và 4 có thể tích thêm *Chỉ thao tác thay đổi dữ liệu* cho gọn.
+  Mỗi thao tác ở tab chính, chuyển sang tab này để chỉ câu SQL vừa chạy.
 
 ### Bước 1 — Tổng quan (1 phút)
 
@@ -108,6 +122,9 @@ Mở trang Tổng quan, nói ngắn gọn: dữ liệu mẫu đúng khối lư�
 biểu đồ doanh thu chính là G8, cảnh báo 2 tàu bay quá hạn bảo dưỡng (VN-A632, VN-A699 — ngay sau khi nạp lại dữ liệu), cột R9 của chuyến sắp bay.
 
 ### Bước 2 — Các truy vấn (3 phút) · *phần quan trọng nhất*
+
+> Mẹo: sau khi đăng nhập ở bước chuẩn bị, chỉ sang tab Nhật ký SQL — thao tác *Đăng nhập* chỉ có **một** câu
+> `SELECT * FROM TAIKHOAN WHERE TenDangNhap = ?`; mật khẩu được so khớp bằng scrypt ở máy chủ, không nằm trong SQL.
 
 1. **Q1**: đổi khoảng ngày, bấm *Thực hiện*, mở **Câu lệnh SQL** cho thấy `LEFT JOIN VE … GROUP BY … ORDER BY TiLeLapDay DESC`.
    Giải thích vì sao tỉ lệ thấp: 40 khách, mỗi khách tối đa 1 vé/chuyến (R2).
@@ -126,6 +143,9 @@ biểu đồ doanh thu chính là G8, cảnh báo 2 tàu bay quá hạn bảo d�
 3. **Demo rollback**: chọn ghế khác, nhập *khách mới*, thêm kiện **35 kg** → báo *"R7: Mỗi kiện hành lý … không quá 32 kg"*.
    Vào bảng **Hành khách** tìm tên khách mới: **không có** → chứng minh cả transaction đã hủy, kể cả khách mới.
 4. (Tuỳ chọn) Thêm 2 kiện **xách tay** → báo R8.
+5. **Chuyển sang tab Nhật ký SQL**: lần bán thành công là `BEGIN → INSERT INTO VE → INSERT INTO HANHLY … → COMMIT`;
+   lần lỗi (khách mới) là `BEGIN → SELECT … HANHKHACH (kiểm tra số giấy tờ) → INSERT INTO HANHKHACH → INSERT INTO VE → INSERT INTO HANHLY` (dòng đỏ, lỗi R7) `→ ROLLBACK`.
+   Đây là bằng chứng rõ nhất cho tính nguyên tử (atomicity) của transaction.
 
 ### Bước 4 — Ràng buộc trong CSDL (2 phút)
 

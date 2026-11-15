@@ -194,7 +194,7 @@ function requireAction(action) {
 
 function setSessionCookie(req, res, token, maxAge) {
   const secure = req.secure ? '; Secure' : '';
-  res.setHeader('Set-Cookie', `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(maxAge / 1000)}${secure}`);
+  res.append('Set-Cookie', `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(maxAge / 1000)}${secure}`);
 }
 
 // ------------------------------------------------------------ API
