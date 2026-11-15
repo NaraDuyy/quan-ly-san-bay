@@ -13,6 +13,14 @@ const INFO = {
 
 const PAGES = { 1: q1, 2: q2, 3: q3, 4: q4, 5: q5 };
 
+// Thời điểm thực hiện truy vấn và tổng thời gian chạy các câu lệnh (máy chủ đo)
+function runInfo(d) {
+  if (!d.thucHien) return '';
+  const { luc, ms } = d.thucHien;
+  return `<div class="q-run">⏱ Thực hiện lúc <b>${esc(date(luc))} ${esc(luc.slice(11, 19))}</b> · thời gian chạy <b>${num(ms, 2)} ms</b>
+    <span class="muted">· xem từng câu ở <a href="#/nhat-ky-sql" target="_blank" rel="noopener">Nhật ký SQL</a></span></div>`;
+}
+
 export default async function queries(view, m, stale) {
   const n = Number(m[1]);
   view.innerHTML = `
@@ -46,7 +54,7 @@ async function q1(el, stale, params = {}) {
       { label: 'Vé đã bán', align: 'num', key: 'SoVeDaBan' },
       { label: 'Tỉ lệ lấp đầy', render: (r) => fillBar(r.TiLeLapDay) },
     ], rows, { empty: 'Không có chuyến bay trong khoảng ngày này' })}</div></div>
-    ${sqlBlock(d.sql)}`;
+    ${runInfo(d)}${sqlBlock(d.sql)}`;
   el.querySelector('#f').onsubmit = (e) => { e.preventDefault(); q1(el, stale, Object.fromEntries(new FormData(e.target))); };
 }
 
@@ -73,7 +81,7 @@ async function q2(el, stale, params = {}) {
       { label: 'Tổng thưởng', align: 'num', fmt: money, key: 'TongThuong' },
       { label: 'Lương tháng', align: 'num', render: (r) => `<b>${money(r.LuongThang)}</b>` },
     ], d.rows, { foot: { HoTen: 'Tổng cộng', LuongCoBan: money(sum('LuongCoBan')), SoChuyen: sum('SoChuyen'), TongThuong: money(sum('TongThuong')), LuongThang: money(sum('LuongThang')) } })}</div></div>
-    ${sqlBlock(d.sql)}`;
+    ${runInfo(d)}${sqlBlock(d.sql)}`;
   el.querySelector('#f').onsubmit = (e) => { e.preventDefault(); q2(el, stale, Object.fromEntries(new FormData(e.target))); };
 }
 
@@ -125,7 +133,7 @@ async function q3(el, stale, maHK = null) {
         { label: 'SL', align: 'num', key: 'SoLuong' }, { label: 'Thành tiền', align: 'num', fmt: money, key: 'ThanhTien' },
       ], d.dichVu, { empty: 'Chưa sử dụng dịch vụ' })}</div></div>
     </div>
-    ${sqlBlock(d.sql)}` : '<div class="card"><div class="empty">Không tìm thấy hành khách</div></div>'}`;
+    ${runInfo(d)}${sqlBlock(d.sql)}` : '<div class="card"><div class="empty">Không tìm thấy hành khách</div></div>'}`;
   el.querySelector('#f').onsubmit = (e) => { e.preventDefault(); q3(el, stale, Number(new FormData(e.target).get('maHK'))); };
 }
 
@@ -161,7 +169,7 @@ async function q4(el, stale) {
         { label: 'Số vé', align: 'num', key: 'SoVe' },
         { label: 'Tổng', align: 'num', render: (r) => `<b>${money(r.Tong)}</b>` },
       ], pivot)}</div></div>
-    ${sqlBlock(d.sql)}`;
+    ${runInfo(d)}${sqlBlock(d.sql)}`;
   stackedBars(el.querySelector('#chart'), d.rows.map((r) => ({ x: r.Thang, ...r })), REVENUE_SERIES, { xLabel: monthLabel });
 }
 
@@ -185,7 +193,7 @@ async function q5(el, stale) {
       <div class="card-body flush">${table(cols(true), d.quaHan, { empty: 'Không có tàu bay quá hạn' })}</div></div>
     <div class="card"><div class="card-head"><div><h2>Tàu bay còn hạn (${d.conHan.length})</h2><p>Sắp xếp theo ngày bảo dưỡng tiếp theo; "sắp tới hạn" = trong vòng 30 ngày</p></div></div>
       <div class="card-body flush">${table(cols(true), d.conHan)}</div></div>
-    ${sqlBlock(d.sql)}`;
+    ${runInfo(d)}${sqlBlock(d.sql)}`;
   el.querySelectorAll('[data-bd]').forEach((b) => {
     b.onclick = async () => {
       const t = new Date();

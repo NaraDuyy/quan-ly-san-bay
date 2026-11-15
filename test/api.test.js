@@ -284,3 +284,17 @@ test('nạp lại dữ liệu mẫu chỉ ghi một dòng tóm tắt', async () 
   assert.ok(log.length < 10, `ghi quá nhiều dòng: ${log.length}`);
   assert.ok(log.some((e) => e.kind === 'note'));
 });
+
+test('nhật ký ghi chú các bước đăng nhập không dùng SQL; Q1–Q5 trả thời gian thực hiện', async () => {
+  const c = await login('ketoan', process.env.DEMO_PASSWORD);
+  const log = (await get('/sql-log', c)).entries.filter((e) => e.action === 'Đăng nhập');
+  const thuTu = log.map((e) => (e.kind === 'note' ? 'note' : e.sql.split(/\s+/)[0]));
+  assert.deepEqual(thuTu, ['SELECT', 'note', 'note'], JSON.stringify(log.map((e) => e.sql)));
+  assert.match(log[1].sql, /scrypt.*KHỚP/);
+  assert.equal(log[2].user, 'ketoan');
+  assert.ok(log.every((e) => typeof e.time === 'number'));
+
+  const q1 = await get('/queries/q1');
+  assert.match(q1.thucHien.luc, /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+  assert.ok(q1.thucHien.ms >= 0);
+});

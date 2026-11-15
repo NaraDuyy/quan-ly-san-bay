@@ -7,6 +7,7 @@ const path = require('node:path');
 const express = require('express');
 const { tx } = require('./db');
 const { fmtDateTime } = require('./rules');
+const sqlLog = require('./sqllog');
 
 class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
@@ -210,7 +211,11 @@ function authRouter(db) {
     if (tooManyFailures(ip)) throw new HttpError(429, 'Bạn đã nhập sai quá nhiều lần, hãy thử lại sau 15 phút');
     const { username, password } = req.body || {};
     const u = db.prepare('SELECT * FROM TAIKHOAN WHERE TenDangNhap = ?').get(String(username || '').trim().toLowerCase());
-    if (!u || !verifyPassword(String(password || ''), u.MatKhauHash)) {
+    const khop = !!u && verifyPassword(String(password || ''), u.MatKhauHash);
+    sqlLog.note(u
+      ? `So khớp mật khẩu bằng scrypt ở máy chủ (không dùng SQL, mật khẩu không vào CSDL): ${khop ? 'KHỚP' : 'KHÔNG KHỚP'}`
+      : 'Không có tài khoản này — dừng, không so khớp mật khẩu');
+    if (!khop) {
       recordFailure(ip);
       throw new HttpError(401, 'Sai tên đăng nhập hoặc mật khẩu');
     }
@@ -219,11 +224,14 @@ function authRouter(db) {
     const token = crypto.randomBytes(32).toString('base64url');
     sessions.set(token, { MaTK: u.MaTK, expires: Date.now() + SESSION_TTL });
     setSessionCookie(req, res, token, SESSION_TTL);
+    req.user = u;
+    sqlLog.note('Tạo phiên đăng nhập trong bộ nhớ máy chủ, gửi cookie sb_sid cho trình duyệt (không ghi CSDL)');
     res.json({ user: publicUser(u), perms: permissionsOf(u) });
   });
 
   r.post('/logout', (req, res) => {
     if (req.sessionToken) sessions.delete(req.sessionToken);
+    sqlLog.note('Xóa phiên đăng nhập khỏi bộ nhớ máy chủ (không chạy SQL)');
     setSessionCookie(req, res, '', 0);
     res.json({ ok: true });
   });

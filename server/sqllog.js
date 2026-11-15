@@ -129,6 +129,16 @@ function quietly(note, fn) {
   }
 }
 
+// Ghi một dòng chú thích vào nhật ký (bước xử lý ở máy chủ không chạy SQL)
+function note(text) {
+  const store = als.getStore();
+  if (!store || store.skip) return;
+  push({
+    time: Date.now(), cid: store.cid, req: store.reqId, method: store.method, path: store.path, action: store.action,
+    user: store.req.user?.TenDangNhap || null, kind: 'note', sql: `-- ${text}`, params: [],
+  });
+}
+
 function cookieValue(header = '', name) {
   const m = header.split(';').map((p) => p.trim()).find((p) => p.startsWith(name + '='));
   return m ? decodeURIComponent(m.slice(name.length + 1)) : null;
@@ -166,4 +176,4 @@ function router() {
   return r;
 }
 
-module.exports = { instrument, quietly, contextMiddleware, router, actionOf };
+module.exports = { instrument, quietly, note, contextMiddleware, router, actionOf };

@@ -42,11 +42,18 @@ module.exports = function opsRouter(db) {
   });
 
   // ------------------------------------------------------------ Q1–Q5
-  r.get('/queries/q1', (req, res) => res.json(Q.q1(db, req.query)));
-  r.get('/queries/q2', (req, res) => res.json(Q.q2(db, req.query)));
-  r.get('/queries/q3', (req, res) => res.json(Q.q3(db, req.query)));
-  r.get('/queries/q4', (req, res) => res.json(Q.q4(db, req.query)));
-  r.get('/queries/q5', (req, res) => res.json(Q.q5(db, req.query)));
+  // Kèm thời điểm thực hiện và tổng thời gian chạy các câu lệnh của truy vấn
+  const timed = (q) => (req, res) => {
+    const luc = fmtDateTime(new Date());
+    const t0 = process.hrtime.bigint();
+    const r = q(db, req.query);
+    res.json({ ...r, thucHien: { luc, ms: Number(process.hrtime.bigint() - t0) / 1e6 } });
+  };
+  r.get('/queries/q1', timed(Q.q1));
+  r.get('/queries/q2', timed(Q.q2));
+  r.get('/queries/q3', timed(Q.q3));
+  r.get('/queries/q4', timed(Q.q4));
+  r.get('/queries/q5', timed(Q.q5));
 
   // ------------------------------------------------------------ chuyến bay
   function chiTietChuyen(maChuyen) {

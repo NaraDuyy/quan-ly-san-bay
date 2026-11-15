@@ -43,6 +43,26 @@ function resultText(e) {
   return '';
 }
 
+// Lưu nhật ký đang hiển thị ra file CSV (mở được bằng Excel)
+function downloadCsv(items) {
+  if (!items.length) return;
+  const pad = (n, l = 2) => String(n).padStart(l, '0');
+  const ts = (t) => { const d = new Date(t); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(), 3)}`; };
+  const res = (e) => (e.result ? ('rows' in e.result ? `${e.result.rows} dòng` : `${e.result.changes} dòng thay đổi`) : '');
+  const cell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const head = ['STT', 'Thời điểm thực hiện', 'Thời gian chạy (ms)', 'Thao tác', 'Yêu cầu', 'Người dùng', 'Loại', 'Câu lệnh SQL', 'Tham số', 'Kết quả', 'Lỗi'];
+  const rows = items.map((e, i) => [i + 1, ts(e.time), e.ms !== undefined ? e.ms.toFixed(3) : '', e.action, `${e.method} ${e.path}`,
+    e.user || 'khách', (KIND[e.kind] || KIND.other).label, e.sql.replace(/\s+/g, ' '), paramsText(e.params), res(e), e.error || '']);
+  // BOM ở đầu để Excel nhận đúng tiếng Việt (UTF-8)
+  const csv = '﻿' + [head, ...rows].map((r) => r.map(cell).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  const d = new Date();
+  a.download = `nhat-ky-sql-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
 export default async function sqllog(view, m, stale) {
   const prefs = loadPrefs();
   let after = 0;
@@ -65,6 +85,7 @@ export default async function sqllog(view, m, stale) {
       <span class="live" id="live"><i></i>Đang theo dõi</span>
       <button class="btn sm" id="pause" type="button">⏸ Tạm dừng</button>
       <button class="btn sm" id="clear" type="button">Xóa màn hình</button>
+      <button class="btn sm" id="csv" type="button">⬇ Tải CSV</button>
     </div></div>
 
     <div id="log" class="sqllog"><div class="empty">Chưa có câu lệnh nào. Hãy thao tác ở tab khác — ví dụ đăng nhập hoặc mở một truy vấn.</div></div>`;
@@ -89,14 +110,14 @@ export default async function sqllog(view, m, stale) {
       <header><span class="sq-time">${clock(g.time)}</span><b>${esc(g.action)}</b>
         <code class="muted">${esc(g.method)} ${esc(g.path)}</code>
         <span class="spacer"></span>
-        <span class="muted small">${g.user ? esc(g.user) : 'khách'} · ${items.length} câu · ${ms.toFixed(1)} ms</span></header>
+        <span class="muted small">${g.user ? esc(g.user) : 'khách'} · ${items.filter((e) => e.kind !== 'note').length} câu SQL${items.some((e) => e.kind === 'note') ? ` · ${items.filter((e) => e.kind === 'note').length} ghi chú` : ''} · ${ms.toFixed(1)} ms</span></header>
       <ol>${items.map((e) => {
         const k = KIND[e.kind] || KIND.other;
         const p = paramsText(e.params);
         return `<li class="${e.error ? 'err' : ''}"><span class="sq-kind ${k.cls}">${k.label}</span>
           <div class="sq-body"><pre>${highlightSql(dedent(e.sql))}</pre>
           <div class="sq-meta">${p ? `<span>Tham số: <code>${esc(p)}</code></span>` : ''}<span>${resultText(e)}</span>
-          ${e.ms !== undefined ? `<span class="muted">${e.ms.toFixed(2)} ms</span>` : ''}</div></div></li>`;
+          <span class="muted">🕒 ${clock(e.time)}${e.ms !== undefined ? ` · ${e.ms.toFixed(2)} ms` : ''}</span></div></div></li>`;
       }).join('')}</ol></section>`;
   }
 
@@ -153,6 +174,7 @@ export default async function sqllog(view, m, stale) {
     $('#live').lastChild.textContent = paused ? 'Đã tạm dừng' : 'Đang theo dõi';
   };
   $('#clear').onclick = () => { clearedAt = after; render(); };
+  $('#csv').onclick = () => downloadCsv(groups.filter(visible).flatMap(visibleItems));
 
   await poll();
 }
