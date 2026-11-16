@@ -18,7 +18,7 @@ const KIND = {
 };
 
 function loadPrefs() {
-  const d = { hideSession: false, writesOnly: false, all: false };
+  const d = { hideSession: false, writesOnly: false, all: false, order: 'newest' };
   try { return { ...d, ...JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') }; } catch (e) { return d; }
 }
 function savePrefs(p) { try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch (e) { /* bỏ qua */ } }
@@ -75,7 +75,7 @@ export default async function sqllog(view, m, stale) {
 
   view.innerHTML = `
     <div class="page-head"><div><h1>Nhật ký SQL</h1>
-      <p><b>Mọi câu lệnh SQL</b> chạy trên CSDL, theo đúng thứ tự thời gian — kể cả câu do máy chủ tự chạy (khởi động, tạo bảng, nạp dữ liệu mẫu).
+      <p><b>Mọi câu lệnh SQL</b> chạy trên CSDL, <b>mới nhất ở trên cùng</b> (trong mỗi thao tác, các câu vẫn theo đúng thứ tự đã chạy) — kể cả câu do máy chủ tự chạy (khởi động, tạo bảng, nạp dữ liệu mẫu).
       Mở trang này ở <b>một tab</b>, thao tác (đăng nhập, bán vé, sửa dữ liệu…) ở <b>tab khác của cùng trình duyệt</b> — câu lệnh hiện ra ngay.
       Câu lặp lại liên tiếp khi nạp dữ liệu mẫu được gộp thành <b>× N lần</b>. Mã băm mật khẩu được che; mật khẩu gốc không bao giờ đi vào SQL.</p></div>
       <a class="btn" href="#/nhat-ky-sql" target="_blank" rel="noopener">↗ Mở ở tab mới</a></div>
@@ -84,6 +84,9 @@ export default async function sqllog(view, m, stale) {
       <label class="row small"><input type="checkbox" id="hideSession" ${prefs.hideSession ? 'checked' : ''}> Ẩn câu kiểm tra phiên đăng nhập</label>
       <label class="row small"><input type="checkbox" id="writesOnly" ${prefs.writesOnly ? 'checked' : ''}> Chỉ thao tác thay đổi dữ liệu (POST / PUT / DELETE)</label>
       <label class="row small" id="allWrap" hidden><input type="checkbox" id="all" ${prefs.all ? 'checked' : ''}> Mọi người dùng (Quản trị)</label>
+      <label class="row small">Sắp xếp <select id="order">
+        <option value="newest" ${prefs.order === 'newest' ? 'selected' : ''}>Mới nhất trước</option>
+        <option value="oldest" ${prefs.order === 'oldest' ? 'selected' : ''}>Cũ nhất trước</option></select></label>
       <span class="spacer"></span>
       <span class="live" id="live"><i></i>Đang theo dõi</span>
       <button class="btn sm" id="pause" type="button">⏸ Tạm dừng</button>
@@ -131,10 +134,25 @@ export default async function sqllog(view, m, stale) {
       <ol>${items.map(itemHtml).join('')}</ol></section>`;
   }
 
+  // Các thao tác theo thứ tự hiển thị: mới nhất trước (mặc định) hoặc cũ nhất trước.
+  // Bên trong mỗi thao tác, câu lệnh luôn giữ đúng thứ tự đã chạy (BEGIN … COMMIT / ROLLBACK).
+  const ordered = () => {
+    const list = groups.filter(visible);
+    return prefs.order === 'newest' ? list.reverse() : list;
+  };
+
   function render() {
+    const newest = prefs.order === 'newest';
+    const nearTop = window.scrollY < 120;
     const nearBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 120;
-    logEl.innerHTML = groups.filter(visible).map(groupHtml).join('') || EMPTY;
-    if (nearBottom) window.scrollTo(0, document.body.scrollHeight);
+    const before = document.body.scrollHeight;
+    logEl.innerHTML = ordered().map(groupHtml).join('') || EMPTY;
+    if (newest) {
+      // Đang đọc ở giữa trang: giữ nguyên chỗ đang đọc khi có dòng mới chèn lên trên
+      if (!nearTop) window.scrollBy(0, document.body.scrollHeight - before);
+    } else if (nearBottom) {
+      window.scrollTo(0, document.body.scrollHeight);
+    }
   }
 
   function add(entries) {
@@ -178,6 +196,7 @@ export default async function sqllog(view, m, stale) {
   $('#hideSession').onchange = onPref('hideSession');
   $('#writesOnly').onchange = onPref('writesOnly');
   $('#all').onchange = onPref('all');
+  $('#order').onchange = (e) => { prefs.order = e.target.value; savePrefs(prefs); render(); window.scrollTo(0, prefs.order === 'newest' ? 0 : document.body.scrollHeight); };
   $('#pause').onclick = () => {
     paused = !paused;
     $('#pause').textContent = paused ? '▶ Tiếp tục' : '⏸ Tạm dừng';
@@ -185,7 +204,7 @@ export default async function sqllog(view, m, stale) {
     $('#live').lastChild.textContent = paused ? 'Đã tạm dừng' : 'Đang theo dõi';
   };
   $('#clear').onclick = () => { clearedAt = after; render(); };
-  $('#csv').onclick = () => downloadCsv(groups.filter(visible).flatMap(visibleItems));
+  $('#csv').onclick = () => downloadCsv(ordered().flatMap(visibleItems));
 
   await poll();
 }

@@ -77,6 +77,7 @@ Mở bằng cách bấm số hiệu chuyến ở Tổng quan, Q1 hoặc bảng C
 - Gom theo từng thao tác: giờ, tên thao tác (*Đăng nhập*, *Bán vé*, *Truy vấn Q1*…), người dùng, số câu, thời gian chạy.
 - Mỗi câu có: loại (*Đọc* / *Ghi* / *Giao tác*), câu SQL tô màu, **tham số** truyền vào dấu `?`, kết quả (số dòng đọc / thay đổi, mã mới),
   và **lỗi** nếu bị ràng buộc chặn (ví dụ *R7* ở câu `INSERT INTO HANHLY`, sau đó là `ROLLBACK`).
+- Mặc định **mới nhất ở trên cùng** (đổi được sang cũ nhất trước); trong mỗi thao tác các câu vẫn theo đúng thứ tự đã chạy.
 - Mỗi câu ghi **thời điểm thực hiện** (đến mili-giây) và **thời gian chạy**; nút **Tải CSV** lưu nhật ký ra file Excel.
 - Tùy chọn (mặc định hiện tất cả): ẩn câu kiểm tra phiên đăng nhập; chỉ hiện thao tác thay đổi dữ liệu (POST / PUT / DELETE); tạm dừng; xóa màn hình.
 - Mỗi trình duyệt chỉ thấy câu lệnh **của chính mình**, nên hai tab cùng trình duyệt thấy chung, người khác không thấy (Quản trị có thể xem tất cả).
