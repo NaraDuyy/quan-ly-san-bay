@@ -75,6 +75,8 @@ Mật khẩu mặc định trùng tên đăng nhập (ví dụ `banve` / `banve`
 
 ### 1.7. Nhật ký SQL (`#/nhat-ky-sql`)
 
+- Không có trên menu; mở bằng đường dẫn https://quan-ly-san-bay.onrender.com/#/nhat-ky-sql hoặc liên kết *Nhật ký SQL* dưới mỗi truy vấn Q1–Q5.
+
 - Hiện **lần lượt, theo thời gian thực** (cập nhật mỗi giây) **mọi** câu SQL chạy trên CSDL: thao tác của người dùng, câu kiểm tra phiên,
   và cả câu do máy chủ tự chạy (*Khởi động máy chủ* — tạo bảng, nạp dữ liệu, tạo tài khoản; người chạy ghi là *hệ thống*).
 - Gom theo từng thao tác: giờ, tên thao tác (*Đăng nhập*, *Bán vé*, *Truy vấn Q1*…), người dùng, số câu, thời gian chạy.
@@ -121,7 +123,7 @@ Mật khẩu mặc định trùng tên đăng nhập (ví dụ `banve` / `banve`
 - Đăng nhập `quantri` → Tổng quan → **Nạp lại dữ liệu mẫu** (đúng kế hoạch mục 9) để dữ liệu sạch và mốc ngày khớp hôm nay. Giữ đăng nhập `quantri` cho bước 1, 2 và 4.
 - Mật khẩu mặc định trùng tên đăng nhập: `quantri` / `quantri`, `banve` / `banve`, `dieuphoi` / `dieuphoi`, `ketoan` / `ketoan`.
 - Nên mở thêm một tab ẩn danh để demo vai trò khách mà không phải đăng xuất.
-- **Mở trang Nhật ký SQL ở tab thứ hai** (menu *Hệ thống → Nhật ký SQL*, hoặc nút *Mở ở tab mới*), đặt cạnh tab chính hoặc chia đôi màn hình.
+- **Mở trang Nhật ký SQL ở tab thứ hai** (gõ đường dẫn `…/#/nhat-ky-sql`, hoặc bấm liên kết *Nhật ký SQL* dưới mỗi truy vấn Q1–Q5), đặt cạnh tab chính hoặc chia đôi màn hình.
   Tích *Ẩn câu kiểm tra phiên đăng nhập*; khi demo bước 3 và 4 có thể tích thêm *Chỉ thao tác thay đổi dữ liệu* cho gọn.
   Mỗi thao tác ở tab chính, chuyển sang tab này để chỉ câu SQL vừa chạy.
 
