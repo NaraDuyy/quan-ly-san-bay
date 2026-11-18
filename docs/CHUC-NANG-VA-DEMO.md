@@ -17,7 +17,7 @@ Cách đọc ERD, lược đồ quan hệ và các giả định thêm / bớt: 
 - Cảnh báo tàu bay quá hạn bảo dưỡng (R6).
 - Bảng chuyến sắp khởi hành: cổng, trạng thái, số vé / số ghế, và cột **Tổ phục vụ (R9)** báo đủ hay thiếu người.
 - Bảng khối lượng dữ liệu: số bản ghi thực tế của 15 bảng so với kế hoạch mục 9.
-- (Quản trị) Nạp lại dữ liệu mẫu, chọn quy mô "đúng kế hoạch mục 9" hoặc "quy mô lớn (~9.000 vé)".
+- (Quản trị) Nạp lại dữ liệu mẫu, chọn quy mô "đúng kế hoạch mục 9", "quy mô lớn (~9.000 vé)" hoặc "lấp đầy 95–100%" (mỗi chuyến không hủy bán 95–100% số ghế, ~13.700 vé; chuyến hủy vẫn 0% vì vé đã hủy).
 
 ### 1.2. Truy vấn Q1–Q5 (`#/q/1` … `#/q/5`)
 

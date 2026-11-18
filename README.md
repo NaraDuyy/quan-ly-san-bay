@@ -77,13 +77,14 @@ Các lệnh khác:
 |---|---|
 | `npm run seed` | Tạo lại dữ liệu mẫu đúng kế hoạch mục 9 (neo theo ngày hiện tại) |
 | `npm run seed:lon` | Bộ dữ liệu lớn (150 chuyến, 600 khách, ~9.000 vé) — tỉ lệ lấp đầy thực tế hơn |
+| `npm run seed:day` | Mỗi chuyến không hủy lấp đầy 95–100% (60 chuyến, 320 khách, ~13.700 vé) |
 | `npm run export:mysql` | Xuất `database/mysql/04_seed.sql` từ cùng bộ sinh dữ liệu |
 | `npm test` | Chạy kiểm thử API (dữ liệu mẫu, R1–R10, Q1–Q5, bán vé, CRUD) |
 | `npm run dev` | Chạy và tự khởi động lại khi sửa mã |
 | `npm run dat-mat-khau -- <tài khoản> <mật khẩu>` | Đặt lại mật khẩu một tài khoản |
 
 > Với khối lượng kế hoạch (40 hành khách, mỗi khách tối đa 1 vé/chuyến theo R2), một chuyến có nhiều nhất 40 vé,
-> nên tỉ lệ lấp đầy Q1 chỉ vài phần trăm. Muốn thấy chuyến gần đầy, dùng `npm run seed:lon` hoặc chọn “Quy mô lớn” trên trang Tổng quan.
+> nên tỉ lệ lấp đầy Q1 chỉ vài phần trăm. Muốn thấy chuyến gần đầy, dùng `npm run seed:day` (95–100%) / `npm run seed:lon`, hoặc chọn quy mô tương ứng khi nạp lại dữ liệu mẫu trên trang Tổng quan.
 
 ## Cài đặt trên MySQL 8
 

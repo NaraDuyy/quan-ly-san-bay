@@ -2,6 +2,7 @@
 //
 //   node server/seed.js                     -> tạo lại data/sanbay.db với khối lượng đúng kế hoạch
 //   node server/seed.js --scale=lon         -> bộ dữ liệu lớn hơn (tỉ lệ lấp đầy thực tế hơn)
+//   node server/seed.js --scale=daydu       -> mỗi chuyến không hủy lấp đầy 95–100% số ghế
 //   node server/seed.js --mysql=<file.sql>  -> xuất thêm script INSERT cho MySQL 8
 //
 // Dữ liệu được neo theo ngày chạy: 3 tháng gần nhất (2 tháng trước + tháng hiện tại),
@@ -17,6 +18,8 @@ const SCALES = {
   // đúng bảng kế hoạch ở mục 9
   kehoach: { chuyen: 60, hanhKhach: 40, ve: 300, hanhLy: 350, phanCong: 240, suDung: 120 },
   lon: { chuyen: 150, hanhKhach: 600, ve: 9000, hanhLy: 11000, phanCong: 640, suDung: 1500 },
+  // mỗi chuyến không hủy bán 95–100% số ghế (cần số khách ≥ số ghế lớn nhất vì R2); số vé tự tính
+  daydu: { chuyen: 60, hanhKhach: 320, lapDay: [0.95, 1], hanhLyMoiVe: 1.15, phanCong: 240, suDung: 1500 },
 };
 
 // ---------------------------------------------------------------- RNG
@@ -77,7 +80,7 @@ function ngaySinh(tuoiMin, tuoiMax, now) {
 // ===================================================================
 function generate(scaleName = 'kehoach', now = new Date()) {
   rnd = mulberry32(2026);
-  const S = SCALES[scaleName];
+  const S = SCALES[scaleName] && { ...SCALES[scaleName] };
   if (!S) throw new Error(`Không có quy mô "${scaleName}" (chọn: ${Object.keys(SCALES).join(', ')})`);
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const winStart = new Date(now.getFullYear(), now.getMonth() - 2, 1);
@@ -224,10 +227,13 @@ function generate(scaleName = 'kehoach', now = new Date()) {
   D.VE = [];
   const trongSoChuyen = D.CHUYENBAY.map((c) => (c._gio > now ? 0.4 : 1) * (chance(0.25) ? randInt(6, 10) : randInt(1, 4)));
   const tongTS = trongSoChuyen.reduce((a, b) => a + b, 0);
-  const soVeChuyen = D.CHUYENBAY.map((c, i) =>
-    Math.min(c._soGhe, S.hanhKhach, Math.floor(S.ve * trongSoChuyen[i] / tongTS)));
+  const soVeChuyen = S.lapDay
+    // quy mô "đầy": mỗi chuyến không hủy bán ngẫu nhiên 95–100% số ghế (chuyến hủy: vé đều DA_HUY)
+    ? D.CHUYENBAY.map((c) => Math.min(c._soGhe, S.hanhKhach,
+      Math.ceil(c._soGhe * (S.lapDay[0] + rnd() * (S.lapDay[1] - S.lapDay[0])))))
+    : D.CHUYENBAY.map((c, i) => Math.min(c._soGhe, S.hanhKhach, Math.floor(S.ve * trongSoChuyen[i] / tongTS)));
   // phân nốt phần dư cho đủ đúng số vé kế hoạch
-  for (let du = S.ve - soVeChuyen.reduce((a, b) => a + b, 0), k = 0; du > 0 && k < 100000; k++) {
+  for (let du = S.lapDay ? 0 : S.ve - soVeChuyen.reduce((a, b) => a + b, 0), k = 0; du > 0 && k < 100000; k++) {
     const i = randInt(0, D.CHUYENBAY.length - 1);
     if (soVeChuyen[i] < Math.min(D.CHUYENBAY[i]._soGhe, S.hanhKhach)) { soVeChuyen[i]++; du--; }
   }
@@ -246,7 +252,7 @@ function generate(scaleName = 'kehoach', now = new Date()) {
       const ngayDat = new Date(Math.min(addMin(c._gio, -randInt(60 * 6, 60 * 24 * 45)).getTime(), now.getTime() - randInt(1, 72) * 3600000));
       let TrangThai;
       if (c.TrangThai === 'HUY') TrangThai = 'DA_HUY';
-      else if (chance(0.05)) TrangThai = 'DA_HUY';
+      else if (!S.lapDay && chance(0.05)) TrangThai = 'DA_HUY'; // quy mô "đầy" không hủy lẻ để giữ 95–100%
       else if (c._gio <= now || c.TrangThai === 'LAM_THU_TUC') TrangThai = 'DA_CHECKIN';
       else TrangThai = 'DA_DAT';
       D.VE.push({
@@ -259,6 +265,7 @@ function generate(scaleName = 'kehoach', now = new Date()) {
   // HANHLY — có kiện ký gửi vượt 23 kg để phát sinh phí quá cước (G4)
   D.HANHLY = [];
   const veHieuLuc = shuffle(D.VE.filter((v) => v.TrangThai !== 'DA_HUY'));
+  if (S.hanhLyMoiVe) S.hanhLy = Math.round(veHieuLuc.length * S.hanhLyMoiVe);
   const soXachTay = Math.min(veHieuLuc.length, Math.round(S.hanhLy * 0.55));
   const themHL = (v, LoaiHL) => {
     const CanNangKg = LoaiHL === 'XACH_TAY'

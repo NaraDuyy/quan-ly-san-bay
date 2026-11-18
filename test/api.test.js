@@ -318,3 +318,22 @@ test('nhật ký ghi chú các bước đăng nhập không dùng SQL; Q1–Q5 t
   assert.match(q1.thucHien.luc, /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
   assert.ok(q1.thucHien.ms >= 0);
 });
+
+test('quy mô "lấp đầy": chuyến không hủy bán 95–100% số ghế, dữ liệu vẫn thỏa R1–R10', async () => {
+  const { createApp: tao } = require('../server');
+  const db = seed({ file: ':memory:', scale: 'daydu', quiet: true });
+  initAccounts(db, { log: false });
+  const s = tao(db).listen(0);
+  await new Promise((r) => s.once('listening', r));
+  try {
+    const url = `http://127.0.0.1:${s.address().port}/api`;
+    const audit = await (await fetch(url + '/constraints/audit')).json();
+    for (const [k, n] of Object.entries(audit)) assert.equal(n, 0, `${k} có ${n} vi phạm`);
+    const q1 = await (await fetch(url + '/queries/q1?tuNgay=2000-01-01&denNgay=2100-01-01')).json();
+    const chay = q1.rows.filter((r) => r.TrangThai !== 'HUY');
+    assert.ok(chay.length > 40);
+    for (const r of chay) assert.ok(r.TiLeLapDay >= 95 && r.TiLeLapDay <= 100, `${r.SoHieuChuyen}: ${r.TiLeLapDay}%`);
+  } finally {
+    s.close(); db.close();
+  }
+});

@@ -267,7 +267,7 @@ Lấy `VE (MaVe, MaChuyen, MaHK, HangGhe, SoGhe, GiaVe, NgayDat, TrangThai)`:
   Đây là quy ước khi sinh dữ liệu, **CSDL không ép** loại cổng phải khớp loại chuyến.
 - Hai tàu bay quá hạn bảo dưỡng (VN-A632, VN-A699) và một tàu sắp tới hạn (VN-A588) để Q5 có dữ liệu.
 - Suất ăn nhà ga tăng giá từ 120.000 đ lên 150.000 đ đầu tháng hiện tại, minh họa giá lịch sử (mục 5.4).
-- Với 40 hành khách và R2, mỗi chuyến tối đa 40 vé → tỉ lệ lấp đầy Q1 thấp; chọn "quy mô lớn" để có chuyến gần đầy.
+- Với 40 hành khách và R2, mỗi chuyến tối đa 40 vé → tỉ lệ lấp đầy Q1 thấp; chọn "lấp đầy 95–100%" (hoặc "quy mô lớn") khi nạp lại dữ liệu mẫu để có chuyến gần đầy.
 
 ---
 

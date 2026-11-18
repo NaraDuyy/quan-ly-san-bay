@@ -20,7 +20,7 @@ export default async function overview(view, m, stale) {
       <h1>Tổng quan khai thác</h1>
       <p>Cảng hàng không quốc tế Nội Bài (HAN) — số liệu tính đến ${esc(dt(d.now))}.</p>
     </div><div class="row">
-      ${canAction('reset') ? `<select id="scale" title="Quy mô dữ liệu mẫu"><option value="kehoach">Đúng kế hoạch mục 9</option><option value="lon">Quy mô lớn (~9.000 vé)</option></select>
+      ${canAction('reset') ? `<select id="scale" title="Quy mô dữ liệu mẫu"><option value="kehoach">Đúng kế hoạch mục 9</option><option value="lon">Quy mô lớn (~9.000 vé)</option><option value="daydu">Lấp đầy 95–100% (~13.700 vé)</option></select>
       <button class="btn" id="reset">↻ Nạp lại dữ liệu mẫu</button>` : ''}
       <a class="btn primary" href="#/ban-ve">✚ Bán vé</a></div></div>
 
