@@ -55,6 +55,7 @@ Muốn thêm / sửa / xóa phải đăng nhập; mỗi tài khoản có một v
 
 Danh sách chức năng chi tiết và kịch bản demo khi báo cáo: [docs/CHUC-NANG-VA-DEMO.md](docs/CHUC-NANG-VA-DEMO.md).
 Hướng dẫn đọc lược đồ ER, lược đồ quan hệ và các giả định thêm / bớt: [docs/HUONG-DAN-LUOC-DO-VA-GIA-DINH.md](docs/HUONG-DAN-LUOC-DO-VA-GIA-DINH.md).
+Toàn bộ câu lệnh SQL web thực thi, xếp theo chức năng: [docs/TOAN-BO-CAU-LENH-SQL.sql](docs/TOAN-BO-CAU-LENH-SQL.sql).
 
 ## Chạy chương trình
 
