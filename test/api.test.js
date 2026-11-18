@@ -230,11 +230,12 @@ test('mật khẩu mặc định đồng bộ theo biến môi trường, bỏ k
   const giu = { a: process.env.ADMIN_PASSWORD, d: process.env.DEMO_PASSWORD };
   try {
     delete process.env.ADMIN_PASSWORD; delete process.env.DEMO_PASSWORD;
-    initAccounts(db, { log: false }); // lần đầu: mật khẩu ngẫu nhiên
+    initAccounts(db, { log: false }); // lần đầu, không đặt biến: mật khẩu trùng tên đăng nhập
+    const hash = (u) => db.prepare('SELECT MatKhauHash FROM TAIKHOAN WHERE TenDangNhap = ?').get(u).MatKhauHash;
+    for (const u of ['quantri', 'banve', 'dieuphoi', 'ketoan']) assert.ok(verifyPassword(u, hash(u)), u);
     process.env.ADMIN_PASSWORD = ' `Abc-12345678` ';
     process.env.DEMO_PASSWORD = '"demo-87654321"\n';
     initAccounts(db, { log: false }); // khởi động lại sau khi đặt biến
-    const hash = (u) => db.prepare('SELECT MatKhauHash FROM TAIKHOAN WHERE TenDangNhap = ?').get(u).MatKhauHash;
     assert.ok(verifyPassword('Abc-12345678', hash('quantri')));
     assert.ok(verifyPassword('demo-87654321', hash('banve')));
     assert.ok(verifyPassword('demo-87654321', hash('ketoan')));

@@ -2,8 +2,6 @@
 // Bảng TAIKHOAN phục vụ riêng cho ứng dụng web (không thuộc 15 bảng của báo cáo)
 // nên được giữ lại khi nạp lại dữ liệu mẫu.
 const crypto = require('node:crypto');
-const fs = require('node:fs');
-const path = require('node:path');
 const express = require('express');
 const { tx } = require('./db');
 const { fmtDateTime } = require('./rules');
@@ -55,14 +53,13 @@ function checkPasswordPolicy(pw) {
   if (typeof pw !== 'string' || pw.length < 8) throw new HttpError(400, 'Mật khẩu phải có ít nhất 8 ký tự');
   if (pw.length > 128) throw new HttpError(400, 'Mật khẩu quá dài');
 }
-const randomPassword = () => crypto.randomBytes(9).toString('base64url');
 function cleanEnv(name) {
   const v = String(process.env[name] || '').trim().replace(/^(["'`])(.*)\1$/, '$2').trim();
   return v || null;
 }
 
 // ------------------------------------------------------------ bảng tài khoản
-function initAccounts(db, { log = true, dataDir = null } = {}) {
+function initAccounts(db, { log = true } = {}) {
   db.exec(`CREATE TABLE IF NOT EXISTS TAIKHOAN (
     MaTK         INTEGER PRIMARY KEY AUTOINCREMENT,
     TenDangNhap  VARCHAR(32) NOT NULL UNIQUE,
@@ -72,56 +69,40 @@ function initAccounts(db, { log = true, dataDir = null } = {}) {
     KichHoat     INTEGER NOT NULL DEFAULT 1 CHECK (KichHoat IN (0, 1)),
     NgayTao      DATETIME NOT NULL
   )`);
-  // Mật khẩu tài khoản mặc định lấy từ biến môi trường (bỏ dấu cách / dấu nháy / dấu ` thừa ở hai đầu
-  // thường dính vào khi sao chép); không có thì sinh ngẫu nhiên lúc tạo tài khoản.
+  // Mật khẩu tài khoản mặc định: lấy từ biến môi trường nếu có đặt (bỏ dấu cách / dấu nháy / dấu ` thừa
+  // ở hai đầu thường dính vào khi sao chép); không đặt thì mật khẩu trùng tên đăng nhập (quantri / quantri…)
+  // cho tiện demo.
   const envPw = { QUAN_TRI: cleanEnv('ADMIN_PASSWORD') };
   envPw.BAN_VE = envPw.DIEU_PHOI = envPw.KE_TOAN = cleanEnv('DEMO_PASSWORD');
-  const envName = (role) => (role === 'QUAN_TRI' ? 'ADMIN_PASSWORD' : 'DEMO_PASSWORD');
-  const randomPw = { admin: randomPassword(), demo: randomPassword() };
+  const nguon = (role) => (envPw[role] ? `theo ${role === 'QUAN_TRI' ? 'ADMIN_PASSWORD' : 'DEMO_PASSWORD'}` : 'trùng tên đăng nhập');
   const DEFAULTS = [
     ['quantri', 'Quản trị hệ thống', 'QUAN_TRI'],
     ['banve', 'Nhân viên bán vé', 'BAN_VE'],
     ['dieuphoi', 'Nhân viên điều phối', 'DIEU_PHOI'],
     ['ketoan', 'Nhân viên kế toán', 'KE_TOAN'],
-  ];
+  ].map(([u, name, role]) => [u, name, role, envPw[role] || u]);
+  const lines = DEFAULTS.map(([u, , role]) => `  ${u.padEnd(9)} mật khẩu ${nguon(role)}`);
 
   // Đã có tài khoản: đồng bộ mật khẩu các tài khoản mặc định theo biến môi trường (nếu có đặt),
-  // để đổi biến môi trường rồi khởi động lại là đăng nhập được ngay.
+  // để đổi biến môi trường rồi khởi động lại là đăng nhập được ngay. Không đặt biến thì giữ nguyên
+  // mật khẩu đang có (kể cả mật khẩu đã đổi trên web hoặc bằng npm run dat-mat-khau).
   if (db.prepare('SELECT COUNT(*) AS n FROM TAIKHOAN').get().n) {
-    const synced = [];
-    for (const [u, , role] of DEFAULTS) {
-      const pw = envPw[role];
+    for (const [u, , role, pw] of DEFAULTS) {
+      if (!envPw[role]) continue;
       const row = db.prepare('SELECT MaTK, MatKhauHash FROM TAIKHOAN WHERE TenDangNhap = ?').get(u);
-      if (!pw || !row) continue;
-      if (!verifyPassword(pw, row.MatKhauHash)) db.prepare('UPDATE TAIKHOAN SET MatKhauHash = ? WHERE MaTK = ?').run(hashPassword(pw), row.MaTK);
-      synced.push(`  ${u.padEnd(9)} mật khẩu theo ${envName(role)} (${pw.length} ký tự)`);
+      if (row && !verifyPassword(pw, row.MatKhauHash)) db.prepare('UPDATE TAIKHOAN SET MatKhauHash = ? WHERE MaTK = ?').run(hashPassword(pw), row.MaTK);
     }
-    if (synced.length && log) console.log(['Tài khoản mặc định:', ...synced].join('\n'));
+    const synced = DEFAULTS.filter(([, , role]) => envPw[role]).map(([u, , role]) => `  ${u.padEnd(9)} mật khẩu ${nguon(role)}`);
+    if (log && synced.length) console.log(['Tài khoản mặc định:', ...synced].join('\n'));
     return null;
   }
 
-  const accounts = DEFAULTS.map(([u, name, role]) => [u, name, role, envPw[role] || (role === 'QUAN_TRI' ? randomPw.admin : randomPw.demo)]);
   tx(db, () => {
     const st = db.prepare('INSERT INTO TAIKHOAN (TenDangNhap, HoTen, VaiTro, MatKhauHash, NgayTao) VALUES (?, ?, ?, ?, ?)');
-    for (const [u, name, role, pw] of accounts) st.run(u, name, role, hashPassword(pw), fmtDateTime(new Date()));
+    for (const [u, name, role, pw] of DEFAULTS) st.run(u, name, role, hashPassword(pw), fmtDateTime(new Date()));
   });
-  if (log) {
-    const fromEnv = accounts.filter(([, , role]) => envPw[role]);
-    if (fromEnv.length) {
-      console.log(['Đã tạo tài khoản mặc định:',
-        ...fromEnv.map(([u, , role, pw]) => `  ${u.padEnd(9)} mật khẩu theo ${envName(role)} (${pw.length} ký tự)`)].join('\n'));
-    }
-  }
-  const generated = accounts.filter(([, , role]) => !envPw[role]);
-  if (generated.length && log) {
-    const lines = generated.map(([u, , role, pw]) => `  ${u.padEnd(9)} (${ROLES[role].label}): ${pw}`);
-    console.log(['Đã tạo tài khoản mặc định với mật khẩu ngẫu nhiên:', ...lines,
-      'Đặt ADMIN_PASSWORD / DEMO_PASSWORD trong biến môi trường để dùng mật khẩu cố định.'].join('\n'));
-    if (dataDir) {
-      fs.writeFileSync(path.join(dataDir, 'tai-khoan.txt'), `Tài khoản mặc định (chỉ lưu trên máy này)\n${lines.join('\n')}\n`, 'utf8');
-    }
-  }
-  return accounts;
+  if (log) console.log(['Đã tạo tài khoản mặc định:', ...lines].join('\n'));
+  return DEFAULTS;
 }
 
 const publicUser = (u) => u && { MaTK: u.MaTK, TenDangNhap: u.TenDangNhap, HoTen: u.HoTen, VaiTro: u.VaiTro };

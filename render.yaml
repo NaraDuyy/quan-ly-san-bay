@@ -12,8 +12,9 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "24"
-      # Mật khẩu tài khoản mặc định — nhập trong Render Dashboard (Environment), không ghi vào repo.
+      # Mật khẩu tài khoản mặc định (tùy chọn) — nhập trong Render Dashboard (Environment), không ghi vào repo.
       # quantri dùng ADMIN_PASSWORD; banve, dieuphoi, ketoan dùng DEMO_PASSWORD.
+      # Để trống / xóa hai biến này thì mật khẩu trùng tên đăng nhập (quantri / quantri…).
       - key: ADMIN_PASSWORD
         sync: false
       - key: DEMO_PASSWORD

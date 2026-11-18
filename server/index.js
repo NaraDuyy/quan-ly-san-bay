@@ -50,7 +50,7 @@ if (require.main === module) {
       sqlLog.note('CSDL chưa có dữ liệu — tạo 15 bảng và nạp dữ liệu mẫu');
       reseed(db);
     }
-    initAccounts(db, { dataDir: path.dirname(DB_FILE) });
+    initAccounts(db);
     return db;
   });
   createApp(db).listen(PORT, () => {

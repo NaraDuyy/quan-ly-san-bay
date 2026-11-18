@@ -58,6 +58,8 @@ Mở bằng cách bấm số hiệu chuyến ở Tổng quan, Q1 hoặc bảng C
 
 ### 1.6. Tài khoản & phân quyền
 
+Mật khẩu mặc định trùng tên đăng nhập (ví dụ `banve` / `banve`).
+
 | Vai trò | Tài khoản | Được thêm / sửa / xóa | Nghiệp vụ |
 |---|---|---|---|
 | Khách (chưa đăng nhập) | — | Không | Xem mọi trang, chạy Q1–Q5 |
@@ -90,7 +92,7 @@ Mở bằng cách bấm số hiệu chuyến ở Tổng quan, Q1 hoặc bảng C
 
 - Giao diện sáng / tối, dùng được trên điện thoại.
 - Bộ script **MySQL 8** trong `database/mysql/` (bảng, trigger `SIGNAL`, thủ tục R9, Q1–Q5, dữ liệu mẫu) — nộp kèm báo cáo nếu cần.
-- 28 kiểm thử tự động (`npm test`) xác nhận R1–R10 đều chặn được, Q1–Q5 đúng, phân quyền đúng.
+- 32 kiểm thử tự động (`npm test`) xác nhận R1–R10 đều chặn được, Q1–Q5 đúng, phân quyền đúng.
 
 ### Ràng buộc được cài đặt ở đâu (để trả lời khi bị hỏi)
 
@@ -115,7 +117,7 @@ Mở bằng cách bấm số hiệu chuyến ở Tổng quan, Q1 hoặc bảng C
 
 - Mở web trước **2–3 phút**: gói miễn phí của Render "ngủ" khi không có truy cập, lần mở đầu chờ khoảng 1 phút.
 - Đăng nhập `quantri` → Tổng quan → **Nạp lại dữ liệu mẫu** (đúng kế hoạch mục 9) để dữ liệu sạch và mốc ngày khớp hôm nay. Giữ đăng nhập `quantri` cho bước 1, 2 và 4.
-- Ghi sẵn mật khẩu `quantri` và mật khẩu demo ra giấy / trình quản lý mật khẩu, **không** trình chiếu chúng.
+- Mật khẩu mặc định trùng tên đăng nhập: `quantri` / `quantri`, `banve` / `banve`, `dieuphoi` / `dieuphoi`, `ketoan` / `ketoan`.
 - Nên mở thêm một tab ẩn danh để demo vai trò khách mà không phải đăng xuất.
 - **Mở trang Nhật ký SQL ở tab thứ hai** (menu *Hệ thống → Nhật ký SQL*, hoặc nút *Mở ở tab mới*), đặt cạnh tab chính hoặc chia đôi màn hình.
   Tích *Ẩn câu kiểm tra phiên đăng nhập*; khi demo bước 3 và 4 có thể tích thêm *Chỉ thao tác thay đổi dữ liệu* cho gọn.

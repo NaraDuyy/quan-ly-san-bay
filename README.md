@@ -12,12 +12,12 @@ Toàn bộ thiết kế trong báo cáo được cài đặt và chạy được
 ## Triển khai công khai (Render, miễn phí)
 
 1. Bấm nút **Deploy to Render** ở trên, đăng nhập Render bằng tài khoản GitHub.
-2. Render đọc `render.yaml`, chọn gói **Free**, nhập hai biến `ADMIN_PASSWORD` và `DEMO_PASSWORD` (mật khẩu tài khoản mặc định), bấm **Deploy Blueprint**. Sau vài phút sẽ có địa chỉ dạng `https://quan-ly-san-bay-xxxx.onrender.com`.
+2. Render đọc `render.yaml`, chọn gói **Free**, bấm **Deploy Blueprint** (hai biến `ADMIN_PASSWORD`, `DEMO_PASSWORD` để trống thì mật khẩu trùng tên đăng nhập). Sau vài phút sẽ có địa chỉ dạng `https://quan-ly-san-bay-xxxx.onrender.com`.
 3. Mỗi lần `git push` lên nhánh `main`, Render tự build và triển khai lại.
 
 Lưu ý gói miễn phí: máy chủ ngủ sau 15 phút không có truy cập (lần mở đầu tiên chờ khoảng 1 phút),
 và ổ đĩa không lưu lâu dài — mỗi lần khởi động lại, dữ liệu và tài khoản tạo thêm được nạp lại từ đầu.
-Vì vậy trên Render nên đặt `ADMIN_PASSWORD` / `DEMO_PASSWORD`; nếu bỏ trống, mỗi lần khởi động máy chủ sẽ sinh mật khẩu ngẫu nhiên mới (xem trong tab **Logs**).
+Vì vậy mật khẩu đã đổi trên web cũng mất khi khởi động lại; muốn mật khẩu riêng cố định thì đặt `ADMIN_PASSWORD` / `DEMO_PASSWORD` trong Render.
 
 ## Tài khoản & phân quyền
 
@@ -31,8 +31,8 @@ Muốn thêm / sửa / xóa phải đăng nhập; mỗi tài khoản có một v
 | Điều phối | `dieuphoi` | CHUYENBAY, MAYBAY, TUYENBAY, CONG, PHANCONG | Đổi trạng thái chuyến, ghi nhận bảo dưỡng |
 | Kế toán | `ketoan` | MUCLUONG, THULAO, DICHVU | Xem lương (Q2), doanh thu (Q4) |
 
-- Mật khẩu: `quantri` dùng biến môi trường `ADMIN_PASSWORD`, ba tài khoản còn lại dùng `DEMO_PASSWORD`.
-  Chạy trên máy mà không đặt biến thì mật khẩu được sinh ngẫu nhiên khi tạo CSDL, in ra màn hình và lưu ở `data/tai-khoan.txt` (không đưa lên git).
+- Mật khẩu mặc định **trùng tên đăng nhập** (`quantri` / `quantri`, `banve` / `banve`, `dieuphoi` / `dieuphoi`, `ketoan` / `ketoan`) cho tiện demo.
+  Muốn mật khẩu riêng: đặt biến môi trường `ADMIN_PASSWORD` (cho `quantri`) và `DEMO_PASSWORD` (cho ba tài khoản còn lại).
 - Quản trị tạo / khóa / đổi vai trò / đặt lại mật khẩu tài khoản ở trang **Tài khoản & phân quyền**; luôn phải còn ít nhất một Quản trị đang hoạt động.
 - Mỗi người tự đổi mật khẩu ở góc dưới thanh menu. Quên mật khẩu quản trị: `npm run dat-mat-khau -- quantri <mật khẩu mới>`.
 - Bảo mật: mật khẩu băm bằng scrypt; phiên đăng nhập lưu ở cookie `HttpOnly`, `SameSite=Lax` (thêm `Secure` khi chạy HTTPS), hết hạn sau 8 giờ không dùng;
