@@ -92,6 +92,7 @@ Mật khẩu mặc định trùng tên đăng nhập (ví dụ `banve` / `banve`
 ### 1.8. Khác
 
 - Giao diện sáng / tối, dùng được trên điện thoại.
+- Mọi ô chọn (chuyến bay, hành khách, nhân viên, vai trò, trạng thái…) là **ô gõ để tìm**: gõ một phần tên, có dấu hay không dấu đều được (ví dụ `nguyen`, `vj141`), dùng ↑ ↓ và Enter hoặc bấm chuột để chọn.
 - Bộ script **MySQL 8** trong `database/mysql/` (bảng, trigger `SIGNAL`, thủ tục R9, Q1–Q5, dữ liệu mẫu) — nộp kèm báo cáo nếu cần.
 - 32 kiểm thử tự động (`npm test`) xác nhận R1–R10 đều chặn được, Q1–Q5 đúng, phân quyền đúng.
 

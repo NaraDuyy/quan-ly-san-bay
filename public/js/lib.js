@@ -284,3 +284,134 @@ export function seatMap(ghe, { selected = null, readonly = false } = {}) {
     <div class="seat-legend"><span><span class="seat"></span>Phổ thông trống</span><span><span class="seat biz"></span>Thương gia trống</span>
     <span><span class="seat taken"></span>Đã bán</span>${readonly ? '' : '<span><span class="seat sel"></span>Đang chọn</span>'}</div>`;
 }
+
+// ------------------------------------------------------------ ô chọn có tìm kiếm
+// Mọi <select> trên web (trừ select có data-native) được thay bằng ô gõ chữ để tìm:
+// gõ một phần tên (có dấu hay không dấu đều được) → danh sách lọc theo → bấm hoặc Enter để chọn.
+// <select> gốc vẫn nằm trong form (ẩn đi) nên FormData, .value, onchange của các trang giữ nguyên.
+const boDauTV = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+const MAX_HIEN = 300;
+
+function comboBox(sel) {
+  if (sel._combo || sel.dataset.native !== undefined || sel.multiple) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'combo';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'combo-input';
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  input.setAttribute('role', 'combobox');
+  input.setAttribute('aria-autocomplete', 'list');
+  input.setAttribute('aria-expanded', 'false');
+  if (sel.title) input.title = sel.title;
+  if (sel.style.cssText) wrap.style.cssText = sel.style.cssText;
+  const list = document.createElement('div');
+  list.className = 'combo-list';
+  list.setAttribute('role', 'listbox');
+  list.hidden = true;
+  sel.after(wrap);
+  wrap.append(sel, input, list);
+  sel.classList.add('combo-native');
+  sel.tabIndex = -1;
+
+  let shown = []; let active = -1;
+  const opts = () => [...sel.options].filter((o) => !o.disabled);
+  const placeholder = () => { const o = sel.options[0]; return o && o.value === '' ? o.text : 'Gõ để tìm…'; };
+  const sync = () => {
+    const o = sel.selectedOptions[0];
+    input.value = o && o.value !== '' ? o.text : '';
+    input.placeholder = placeholder();
+    input.disabled = sel.disabled;
+  };
+
+  const place = () => {
+    const r = input.getBoundingClientRect();
+    const below = window.innerHeight - r.bottom;
+    list.style.left = `${r.left}px`;
+    list.style.minWidth = `${r.width}px`;
+    list.style.maxWidth = `${Math.max(r.width, Math.min(520, window.innerWidth - r.left - 8))}px`;
+    if (below < 220 && r.top > below) { list.style.top = ''; list.style.bottom = `${window.innerHeight - r.top + 2}px`; list.style.maxHeight = `${Math.min(300, r.top - 8)}px`; }
+    else { list.style.bottom = ''; list.style.top = `${r.bottom + 2}px`; list.style.maxHeight = `${Math.min(300, below - 8)}px`; }
+  };
+  const setActive = (i) => {
+    active = i;
+    list.querySelectorAll('.combo-opt').forEach((el, k) => el.classList.toggle('active', k === i));
+    list.children[i]?.scrollIntoView({ block: 'nearest' });
+  };
+  const draw = (q) => {
+    const tu = boDauTV(q).split(/\s+/).filter(Boolean);
+    const all = opts().filter((o) => o.value !== '' || !sel.required);
+    const hop = tu.length ? all.filter((o) => { const t = boDauTV(o.text); return tu.every((w) => t.includes(w)); }) : all;
+    shown = hop.slice(0, MAX_HIEN);
+    list.innerHTML = shown.length
+      ? shown.map((o, i) => `<div class="combo-opt${o.selected ? ' sel' : ''}" role="option" data-i="${i}">${esc(o.text)}</div>`).join('')
+        + (hop.length > MAX_HIEN ? `<div class="combo-empty">… còn ${hop.length - MAX_HIEN} kết quả, gõ thêm để lọc</div>` : '')
+      : '<div class="combo-empty">Không tìm thấy</div>';
+    const cur = shown.findIndex((o) => o.selected);
+    setActive(tu.length ? (shown.length ? 0 : -1) : cur);
+  };
+  const open = (q = '') => {
+    if (sel.disabled) return;
+    draw(q); place(); list.hidden = false; input.setAttribute('aria-expanded', 'true');
+  };
+  const close = () => { list.hidden = true; input.setAttribute('aria-expanded', 'false'); active = -1; };
+  const choose = (o) => {
+    if (!o) return;
+    const doi = sel.value !== o.value;
+    sel.value = o.value;
+    sync(); close();
+    if (doi) { sel.dispatchEvent(new Event('input', { bubbles: true })); sel.dispatchEvent(new Event('change', { bubbles: true })); }
+  };
+
+  input.addEventListener('focus', () => { input.select(); open(); });
+  input.addEventListener('mousedown', () => { if (document.activeElement === input && list.hidden) open(); });
+  input.addEventListener('input', () => open(input.value));
+  input.addEventListener('blur', () => { setTimeout(() => { if (document.activeElement !== input) { close(); sync(); } }, 120); });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (list.hidden) return open();
+      const n = shown.length; if (!n) return;
+      setActive(e.key === 'ArrowDown' ? (active + 1) % n : (active - 1 + n) % n);
+    } else if (e.key === 'Enter') {
+      if (!list.hidden) { e.preventDefault(); choose(shown[active] || (shown.length === 1 ? shown[0] : null)); }
+    } else if (e.key === 'Escape') {
+      if (!list.hidden) { e.preventDefault(); e.stopPropagation(); close(); sync(); }
+    } else if (e.key === 'Tab') {
+      if (!list.hidden && input.value && active >= 0 && input.value !== sel.selectedOptions[0]?.text) choose(shown[active]);
+    }
+  });
+  list.addEventListener('mousedown', (e) => {
+    e.preventDefault(); // giữ focus ở ô gõ
+    const el = e.target.closest('.combo-opt');
+    if (el) choose(shown[Number(el.dataset.i)]);
+  });
+  sel.addEventListener('change', sync);
+  sel.addEventListener('focus', () => input.focus()); // trình duyệt báo thiếu giá trị thì đưa con trỏ về ô gõ
+  sel._combo = { sync, close };
+  sync();
+}
+
+// Trang gán select.value bằng code (không phát sự kiện) thì ô gõ vẫn hiện đúng lựa chọn
+for (const prop of ['value', 'selectedIndex']) {
+  const d = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, prop);
+  Object.defineProperty(HTMLSelectElement.prototype, prop, {
+    ...d, set(v) { d.set.call(this, v); this._combo?.sync(); },
+  });
+}
+// Cuộn trang / đổi kích thước cửa sổ thì đóng danh sách đang mở (danh sách đặt cố định theo màn hình)
+const dongTatCa = (e) => {
+  if (e?.target?.closest?.('.combo-list')) return;
+  document.querySelectorAll('select.combo-native').forEach((s) => s._combo?.close());
+};
+window.addEventListener('scroll', dongTatCa, true);
+window.addEventListener('resize', dongTatCa);
+
+const nangCap = (root) => {
+  if (root.tagName === 'SELECT') comboBox(root);
+  else root.querySelectorAll?.('select').forEach(comboBox);
+};
+nangCap(document.body);
+new MutationObserver((ms) => { for (const m of ms) m.addedNodes.forEach((n) => n.nodeType === 1 && nangCap(n)); })
+  .observe(document.body, { childList: true, subtree: true });

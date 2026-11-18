@@ -62,7 +62,7 @@ export default async function data(view, m, stale) {
     </table></div>` : '<div class="empty">Không có bản ghi nào</div>';
     const pages = Math.max(1, Math.ceil(res.total / q.size));
     view.querySelector('#pager').innerHTML = `<span>${res.total} bản ghi</span><span class="spacer"></span>
-      <select id="size">${[10, 20, 50, 100].map((s) => `<option ${s === q.size ? 'selected' : ''}>${s}</option>`).join('')}</select>
+      <select id="size" data-native>${[10, 20, 50, 100].map((s) => `<option ${s === q.size ? 'selected' : ''}>${s}</option>`).join('')}</select>
       <button class="btn sm" id="prev" ${q.page <= 1 ? 'disabled' : ''}>‹ Trước</button>
       <span>Trang ${q.page} / ${pages}</span>
       <button class="btn sm" id="next" ${q.page >= pages ? 'disabled' : ''}>Sau ›</button>`;

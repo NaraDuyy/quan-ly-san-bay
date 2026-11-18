@@ -84,7 +84,7 @@ export default async function sqllog(view, m, stale) {
       <label class="row small"><input type="checkbox" id="hideSession" ${prefs.hideSession ? 'checked' : ''}> Ẩn câu kiểm tra phiên đăng nhập</label>
       <label class="row small"><input type="checkbox" id="writesOnly" ${prefs.writesOnly ? 'checked' : ''}> Chỉ thao tác thay đổi dữ liệu (POST / PUT / DELETE)</label>
       <label class="row small" id="allWrap" hidden><input type="checkbox" id="all" ${prefs.all ? 'checked' : ''}> Mọi người dùng (Quản trị)</label>
-      <label class="row small">Sắp xếp <select id="order">
+      <label class="row small">Sắp xếp <select id="order" data-native>
         <option value="newest" ${prefs.order === 'newest' ? 'selected' : ''}>Mới nhất trước</option>
         <option value="oldest" ${prefs.order === 'oldest' ? 'selected' : ''}>Cũ nhất trước</option></select></label>
       <span class="spacer"></span>

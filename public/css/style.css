@@ -397,3 +397,21 @@ details.sql pre { margin: 0; padding: 4px 14px 14px; overflow-x: auto; font-fami
   .rule { grid-template-columns: 44px 1fr; }
   .rule > .btn { grid-column: 2; justify-self: start; }
 }
+
+/* ô chọn có tìm kiếm (thay cho <select>, xem comboBox trong lib.js) */
+.combo { position: relative; display: block; min-width: 0; }
+.combo-input {
+  width: 100%; padding-right: 26px; cursor: text; text-overflow: ellipsis;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-3) 50%), linear-gradient(135deg, var(--text-3) 50%, transparent 50%);
+  background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%; background-size: 5px 5px; background-repeat: no-repeat;
+}
+.combo-input:disabled { background-color: var(--surface-2); color: var(--text-3); cursor: not-allowed; }
+select.combo-native { position: absolute; left: 0; bottom: 0; width: 100%; height: 1px; opacity: 0; pointer-events: none; padding: 0; border: 0; }
+.combo-list {
+  position: fixed; z-index: 70; overflow-y: auto; background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: 8px; box-shadow: var(--shadow, 0 10px 30px rgba(0, 0, 0, .18)); padding: 4px; font-size: 13px;
+}
+.combo-opt { padding: 7px 10px; border-radius: 6px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.combo-opt.sel { font-weight: 600; color: var(--accent-ink); }
+.combo-opt.active { background: var(--accent-soft); }
+.combo-empty { padding: 8px 10px; color: var(--text-3); font-size: 12px; }
