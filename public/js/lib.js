@@ -73,6 +73,8 @@ export function fillBar(pct) {
 
 // ------------------------------------------------------------ bảng
 // columns: [{ key, label, align: 'num', render(row) -> html, fmt(value) -> text }]
+// Bấm tiêu đề cột để sắp xếp tăng / giảm (sắp xếp ngay trên trình duyệt).
+// Giá trị dùng để so sánh: c.sort (tên cột dữ liệu hoặc hàm) → c.key → chữ hiển thị trong ô.
 export function table(columns, rows, { empty = 'Không có dữ liệu', foot = null, cls = '' } = {}) {
   if (!rows.length) return `<div class="empty">${esc(empty)}</div>`;
   const cell = (c, r) => {
@@ -80,12 +82,47 @@ export function table(columns, rows, { empty = 'Không có dữ liệu', foot = 
     const v = r[c.key];
     return esc(c.fmt ? c.fmt(v, r) : v);
   };
-  return `<div class="table-wrap"><table class="tbl ${cls}">
-    <thead><tr>${columns.map((c) => `<th class="${c.align || ''}">${esc(c.label)}</th>`).join('')}</tr></thead>
-    <tbody>${rows.map((r) => `<tr>${columns.map((c) => `<td class="${c.align || ''}">${cell(c, r)}</td>`).join('')}</tr>`).join('')}</tbody>
+  const sortable = (c) => c.label && c.sort !== false && c.align !== 'actions';
+  const sortVal = (c, r) => {
+    const v = typeof c.sort === 'function' ? c.sort(r) : c.sort ? r[c.sort] : c.key ? r[c.key] : undefined;
+    return v === undefined ? '' : ` data-v="${esc(v ?? '')}"`;
+  };
+  return `<div class="table-wrap"><table class="tbl client-sort ${cls}">
+    <thead><tr>${columns.map((c, i) => (sortable(c)
+    ? `<th class="sortable ${c.align || ''}" data-col="${i}" title="Bấm để sắp xếp tăng / giảm">${esc(c.label)}<span class="arrow off">⇅</span></th>`
+    : `<th class="${c.align || ''}">${esc(c.label)}</th>`)).join('')}</tr></thead>
+    <tbody>${rows.map((r) => `<tr>${columns.map((c) => `<td class="${c.align || ''}"${sortable(c) ? sortVal(c, r) : ''}>${cell(c, r)}</td>`).join('')}</tr>`).join('')}</tbody>
     ${foot ? `<tfoot><tr>${columns.map((c) => `<td class="${c.align || ''}">${foot[c.key] ?? ''}</td>`).join('')}</tr></tfoot>` : ''}
   </table></div>`;
 }
+
+// So sánh: ô trống luôn xếp cuối; hai số thì so theo số; còn lại so chữ tiếng Việt (có xét số trong chữ: 2A < 10A)
+function compareCell(a, b) {
+  if (a === '' || b === '') return a === b ? 0 : a === '' ? 1 : -1;
+  const x = Number(a); const y = Number(b);
+  if (Number.isFinite(x) && Number.isFinite(y)) return x - y;
+  return a.localeCompare(b, 'vi', { numeric: true, sensitivity: 'base' });
+}
+document.addEventListener('click', (e) => {
+  const th = e.target.closest('table.client-sort th[data-col]');
+  if (!th) return;
+  const tbl = th.closest('table');
+  const col = Number(th.dataset.col);
+  const dir = th.dataset.dir === 'asc' ? 'desc' : 'asc';
+  tbl.querySelectorAll('th[data-col]').forEach((h) => {
+    delete h.dataset.dir;
+    h.querySelector('.arrow').className = 'arrow off'; h.querySelector('.arrow').textContent = '⇅';
+  });
+  th.dataset.dir = dir;
+  th.querySelector('.arrow').className = 'arrow'; th.querySelector('.arrow').textContent = dir === 'asc' ? '▲' : '▼';
+  const val = (tr) => { const td = tr.cells[col]; return (td.dataset.v ?? td.textContent).trim(); };
+  const body = tbl.tBodies[0];
+  const sorted = [...body.rows].map((tr, i) => ({ tr, i, v: val(tr) })).sort((p, q) => {
+    if (p.v === '' || q.v === '') return compareCell(p.v, q.v) || p.i - q.i; // ô trống cuối ở cả hai chiều
+    return (dir === 'asc' ? compareCell(p.v, q.v) : compareCell(q.v, p.v)) || p.i - q.i;
+  });
+  body.append(...sorted.map((s) => s.tr));
+});
 
 // ------------------------------------------------------------ SQL
 const KW = /\b(SELECT|FROM|WHERE|JOIN|LEFT|ON|AND|OR|NOT|GROUP BY|ORDER BY|HAVING|AS|WITH|UNION|CASE|WHEN|THEN|ELSE|END|COUNT|SUM|COALESCE|ROUND|CAST|INTEGER|DESC|ASC|IN|BETWEEN|IS|NULL|EXISTS|LIMIT|INSERT|INTO|VALUES|UPDATE|SET|DELETE|date|julianday|strftime|DISTINCT)\b/g;

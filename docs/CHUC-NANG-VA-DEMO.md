@@ -22,6 +22,7 @@ Cách đọc ERD, lược đồ quan hệ và các giả định thêm / bớt: 
 ### 1.2. Truy vấn Q1–Q5 (`#/q/1` … `#/q/5`)
 
 Mỗi trang có nút **Câu lệnh SQL** để xem đúng câu SQL đang chạy.
+Mọi bảng kết quả trên web (Q1–Q5, Tổng quan, chi tiết chuyến, tài khoản) đều **bấm tiêu đề cột để sắp xếp tăng / giảm** (▲ / ▼; cột chưa sắp xếp có dấu ⇅).
 
 | Truy vấn | Chức năng | Tham số |
 |---|---|---|
@@ -51,7 +52,7 @@ Mở bằng cách bấm số hiệu chuyến ở Tổng quan, Q1 hoặc bảng C
 
 ### 1.5. Quản lý dữ liệu 15 bảng (menu Danh mục / Khai thác / Hành khách / Nhân sự / Dịch vụ)
 
-- Xem, tìm kiếm, sắp xếp theo cột, phân trang.
+- Xem, tìm kiếm, phân trang; bấm tiêu đề cột để sắp xếp tăng / giảm (máy chủ đổi `ORDER BY … ASC / DESC`, nên sắp xếp trên toàn bộ bảng chứ không chỉ trang đang xem).
 - Thêm / sửa / xóa qua form sinh tự động: ô chọn cho khóa ngoại (hiển thị tên, không phải mã), ô chọn cho ENUM, ô ngày giờ.
 - Cột tính tự động: `PhiQuaCan` (G4), `ThanhTien` (đơn giá tại thời điểm dùng — mục 5.4), `NgayBay` và `GioDenKeHoach` của chuyến bay.
 - Vi phạm ràng buộc hiển thị bằng thông báo nghiệp vụ (ví dụ *"R3: Số ghế này đã được bán trên chuyến bay"*) thay vì lỗi kỹ thuật.

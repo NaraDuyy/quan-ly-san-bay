@@ -152,6 +152,8 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 .tbl th.sortable { cursor: pointer; user-select: none; }
 .tbl th.sortable:hover { color: var(--text); }
 .tbl th .arrow { color: var(--accent); margin-left: 3px; }
+.tbl th .arrow.off { color: var(--text-3); opacity: .55; }
+.tbl th.sortable:hover .arrow.off { opacity: 1; }
 .tbl td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 .tbl tbody tr:hover td { background: var(--surface-2); }
 .tbl tfoot td { font-weight: 600; background: var(--surface-2); border-bottom: 0; }

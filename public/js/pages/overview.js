@@ -39,8 +39,8 @@ export default async function overview(view, m, stale) {
       <div class="card"><div class="card-head"><div><h2>Cảnh báo bảo dưỡng</h2><p>Tàu bay quá 180 ngày không được gán chuyến mới (R6)</p></div></div>
         <div class="card-body flush">${table([
           { label: 'Tàu bay', render: (r) => `<b>${esc(r.SoHieuMB)}</b><span class="fk-sub">${esc(r.TenHang)} · ${esc(r.Model)}</span>` },
-          { label: 'Tới hạn', render: (r) => esc(date(r.NgayBaoDuongTiepTheo)) },
-          { label: 'Tình trạng', render: (r) => badge(r.TinhTrang, `Quá ${-r.SoNgayConLai} ngày`) },
+          { label: 'Tới hạn', sort: 'NgayBaoDuongTiepTheo', render: (r) => esc(date(r.NgayBaoDuongTiepTheo)) },
+          { label: 'Tình trạng', sort: 'SoNgayConLai', render: (r) => badge(r.TinhTrang, `Quá ${-r.SoNgayConLai} ngày`) },
         ], d.quaHan, { empty: 'Không có tàu bay quá hạn' })}
         <div style="padding:10px 16px"><a href="#/q/5">Xem toàn bộ lịch bảo dưỡng (Q5) →</a></div></div></div>
     </div>
@@ -50,10 +50,10 @@ export default async function overview(view, m, stale) {
       <div class="card-body flush">${table([
         { label: 'Chuyến', render: (r) => `<a href="#/chuyen/${r.MaChuyen}"><b>${esc(r.SoHieuChuyen)}</b></a>` },
         { label: 'Đường bay', render: (r) => `${esc(r.SanBayDi)} → ${esc(r.SanBayDen)}` },
-        { label: 'Khởi hành', render: (r) => esc(dt(r.GioKHKeHoach)) },
+        { label: 'Khởi hành', sort: 'GioKHKeHoach', render: (r) => esc(dt(r.GioKHKeHoach)) },
         { label: 'Cổng', key: 'TenCong' },
         { label: 'Trạng thái', render: (r) => badge(r.TrangThai) },
-        { label: 'Vé / ghế', align: 'num', render: (r) => `${r.SoVe} / ${r.SoGhe}` },
+        { label: 'Vé / ghế', sort: 'SoVe', align: 'num', render: (r) => `${r.SoVe} / ${r.SoGhe}` },
         { label: 'Tổ phục vụ (R9)', render: (r) => (r.DieuPhoi >= 1 && r.ThuTuc >= 2
           ? badge('CON_HAN', `Đủ · ${r.DieuPhoi} ĐP, ${r.ThuTuc} TT`) : badge('QUA_HAN', `Thiếu · ${r.DieuPhoi} ĐP, ${r.ThuTuc} TT`)) },
       ], d.sapToi, { empty: 'Không có chuyến sắp tới' })}</div></div>

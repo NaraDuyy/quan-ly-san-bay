@@ -32,7 +32,7 @@ export default async function accounts(view, m, stale) {
           { label: 'Họ tên', key: 'HoTen' },
           { label: 'Vai trò', render: (r) => esc(roleLabel(r.VaiTro)) },
           { label: 'Trạng thái', render: (r) => (r.KichHoat ? badge('CON_HAN', 'Hoạt động') : badge('QUA_HAN', 'Đã khóa')) },
-          { label: 'Ngày tạo', render: (r) => esc(dt(r.NgayTao)) },
+          { label: 'Ngày tạo', sort: 'NgayTao', render: (r) => esc(dt(r.NgayTao)) },
           { label: '', align: 'actions', render: (r) => `<button class="btn sm link" data-edit="${r.MaTK}">Sửa</button>
             ${r.MaTK === state.me.user.MaTK ? '' : `<button class="btn sm link danger" data-del="${r.MaTK}">Xóa</button>`}` },
         ], rows)}</div></div>

@@ -47,12 +47,12 @@ async function q1(el, stale, params = {}) {
     <div class="card-body flush">${table([
       { label: 'Chuyến', render: (r) => `<a href="#/chuyen/${r.MaChuyen}"><b>${esc(r.SoHieuChuyen)}</b></a>` },
       { label: 'Đường bay', key: 'DuongBay' },
-      { label: 'Khởi hành', render: (r) => esc(dt(r.GioKHKeHoach)) },
+      { label: 'Khởi hành', sort: 'GioKHKeHoach', render: (r) => esc(dt(r.GioKHKeHoach)) },
       { label: 'Trạng thái', render: (r) => badge(r.TrangThai) },
       { label: 'Tàu bay', key: 'SoHieuMB' },
       { label: 'Số ghế', align: 'num', key: 'SoGhe' },
       { label: 'Vé đã bán', align: 'num', key: 'SoVeDaBan' },
-      { label: 'Tỉ lệ lấp đầy', render: (r) => fillBar(r.TiLeLapDay) },
+      { label: 'Tỉ lệ lấp đầy', sort: 'TiLeLapDay', render: (r) => fillBar(r.TiLeLapDay) },
     ], rows, { empty: 'Không có chuyến bay trong khoảng ngày này' })}</div></div>
     ${runInfo(d)}${sqlBlock(d.sql)}`;
   el.querySelector('#f').onsubmit = (e) => { e.preventDefault(); q1(el, stale, Object.fromEntries(new FormData(e.target))); };
@@ -79,7 +79,7 @@ async function q2(el, stale, params = {}) {
       { label: 'Số chuyến', align: 'num', key: 'SoChuyen' },
       { label: 'Chi tiết thưởng', render: (r) => (chiTiet[r.MaNV] || []).map((c) => `<span class="small">${esc(VAI_TRO_LABEL[c.VaiTro])} × ${c.SoChuyen}</span>`).join('<br>') || '<span class="muted small">—</span>' },
       { label: 'Tổng thưởng', align: 'num', fmt: money, key: 'TongThuong' },
-      { label: 'Lương tháng', align: 'num', render: (r) => `<b>${money(r.LuongThang)}</b>` },
+      { label: 'Lương tháng', sort: 'LuongThang', align: 'num', render: (r) => `<b>${money(r.LuongThang)}</b>` },
     ], d.rows, { foot: { HoTen: 'Tổng cộng', LuongCoBan: money(sum('LuongCoBan')), SoChuyen: sum('SoChuyen'), TongThuong: money(sum('TongThuong')), LuongThang: money(sum('LuongThang')) } })}</div></div>
     ${runInfo(d)}${sqlBlock(d.sql)}`;
   el.querySelector('#f').onsubmit = (e) => { e.preventDefault(); q2(el, stale, Object.fromEntries(new FormData(e.target))); };
@@ -113,23 +113,23 @@ async function q3(el, stale, maHK = null) {
     <div class="card" style="margin-top:16px"><div class="card-head"><h2>Các chuyến bay (${d.chuyen.length})</h2></div><div class="card-body flush">${table([
       { label: 'Mã vé', align: 'num', key: 'MaVe' },
       { label: 'Chuyến', key: 'SoHieuChuyen' }, { label: 'Đường bay', key: 'DuongBay' },
-      { label: 'Khởi hành', render: (r) => esc(dt(r.GioKHKeHoach)) },
+      { label: 'Khởi hành', sort: 'GioKHKeHoach', render: (r) => esc(dt(r.GioKHKeHoach)) },
       { label: 'Chuyến bay', render: (r) => badge(r.TrangThaiChuyen) },
       { label: 'Hạng / ghế', render: (r) => `${esc(label(r.HangGhe))} · <b>${esc(r.SoGhe)}</b>` },
       { label: 'Giá vé', align: 'num', fmt: money, key: 'GiaVe' },
       { label: 'Vé', render: (r) => badge(r.TrangThaiVe) },
-      { label: 'Hành lý', align: 'num', render: (r) => `${r.SoKienHL} kiện` },
+      { label: 'Hành lý', sort: 'SoKienHL', align: 'num', render: (r) => `${r.SoKienHL} kiện` },
       { label: 'Phí HL', align: 'num', fmt: money, key: 'PhiHanhLy' },
     ], d.chuyen, { empty: 'Chưa có chuyến bay' })}</div></div>
     <div class="grid cols-2" style="margin-top:16px">
       <div class="card"><div class="card-head"><h2>Hành lý từng chuyến (${d.hanhLy.length})</h2></div><div class="card-body flush">${table([
         { label: 'Vé', align: 'num', key: 'MaVe' }, { label: 'Chuyến', key: 'SoHieuChuyen' },
         { label: 'Loại', render: (r) => esc(label(r.LoaiHL)) },
-        { label: 'Cân nặng', align: 'num', render: (r) => `${num(r.CanNangKg, 1)} kg` },
+        { label: 'Cân nặng', sort: 'CanNangKg', align: 'num', render: (r) => `${num(r.CanNangKg, 1)} kg` },
         { label: 'Phí quá cước', align: 'num', fmt: money, key: 'PhiQuaCan' },
       ], d.hanhLy, { empty: 'Không có hành lý' })}</div></div>
       <div class="card"><div class="card-head"><h2>Dịch vụ đã sử dụng (${d.dichVu.length})</h2></div><div class="card-body flush">${table([
-        { label: 'Thời gian', render: (r) => esc(dt(r.ThoiGian)) }, { label: 'Dịch vụ', key: 'TenDV' },
+        { label: 'Thời gian', sort: 'ThoiGian', render: (r) => esc(dt(r.ThoiGian)) }, { label: 'Dịch vụ', key: 'TenDV' },
         { label: 'SL', align: 'num', key: 'SoLuong' }, { label: 'Thành tiền', align: 'num', fmt: money, key: 'ThanhTien' },
       ], d.dichVu, { empty: 'Chưa sử dụng dịch vụ' })}</div></div>
     </div>
@@ -156,18 +156,18 @@ async function q4(el, stale) {
     <div class="card"><div class="card-head"><div><h2>Doanh thu theo tháng và nguồn thu</h2><p>Di chuột lên cột để xem chi tiết</p></div></div>
       <div class="card-body" id="chart"></div>
       <div class="card-body flush">${table([
-        { label: 'Tháng', render: (r) => `<b>${esc(monthLabel(r.Thang))}</b>` },
+        { label: 'Tháng', sort: 'Thang', render: (r) => `<b>${esc(monthLabel(r.Thang))}</b>` },
         { label: 'Tiền vé', align: 'num', fmt: money, key: 'TienVe' },
         { label: 'Phí hành lý quá cước', align: 'num', fmt: money, key: 'PhiHanhLy' },
         { label: 'Dịch vụ nhà ga', align: 'num', fmt: money, key: 'TienDichVu' },
-        { label: 'Tổng doanh thu', align: 'num', render: (r) => `<b>${money(r.TongDoanhThu)}</b>` },
+        { label: 'Tổng doanh thu', sort: 'TongDoanhThu', align: 'num', render: (r) => `<b>${money(r.TongDoanhThu)}</b>` },
       ], d.rows, { foot: { Thang: 'Cộng', TienVe: money(sum('TienVe')), PhiHanhLy: money(sum('PhiHanhLy')), TienDichVu: money(sum('TienDichVu')), TongDoanhThu: money(sum('TongDoanhThu')) } })}</div></div>
     <div class="card" style="margin-top:16px"><div class="card-head"><div><h2>Doanh thu tiền vé theo hãng hàng không</h2><p>Hãng xác định qua tàu bay thực hiện chuyến (MAYBAY → HANGHANGKHONG)</p></div></div>
       <div class="card-body flush">${table([
         { label: 'Hãng', render: (r) => `<span class="tag">${esc(r.MaHang)}</span> ${esc(r.TenHang)}` },
         ...thang.map((t) => ({ label: monthLabel(t), align: 'num', render: (r) => money(r[t]) })),
         { label: 'Số vé', align: 'num', key: 'SoVe' },
-        { label: 'Tổng', align: 'num', render: (r) => `<b>${money(r.Tong)}</b>` },
+        { label: 'Tổng', sort: 'Tong', align: 'num', render: (r) => `<b>${money(r.Tong)}</b>` },
       ], pivot)}</div></div>
     ${runInfo(d)}${sqlBlock(d.sql)}`;
   stackedBars(el.querySelector('#chart'), d.rows.map((r) => ({ x: r.Thang, ...r })), REVENUE_SERIES, { xLabel: monthLabel });
@@ -180,9 +180,9 @@ async function q5(el, stale) {
   const cols = (actions) => [
     { label: 'Tàu bay', render: (r) => `<b>${esc(r.SoHieuMB)}</b><span class="fk-sub">${esc(r.TenHang)}</span>` },
     { label: 'Model', key: 'Model' }, { label: 'Số ghế', align: 'num', key: 'SoGhe' },
-    { label: 'Bảo dưỡng cuối', render: (r) => esc(date(r.NgayBaoDuongCuoi)) },
-    { label: 'Bảo dưỡng tiếp theo', render: (r) => `<b>${esc(date(r.NgayBaoDuongTiepTheo))}</b>` },
-    { label: 'Còn lại', align: 'num', render: (r) => (r.SoNgayConLai < 0 ? `<span style="color:var(--bad)">quá ${-r.SoNgayConLai} ngày</span>` : `${r.SoNgayConLai} ngày`) },
+    { label: 'Bảo dưỡng cuối', sort: 'NgayBaoDuongCuoi', render: (r) => esc(date(r.NgayBaoDuongCuoi)) },
+    { label: 'Bảo dưỡng tiếp theo', sort: 'NgayBaoDuongTiepTheo', render: (r) => `<b>${esc(date(r.NgayBaoDuongTiepTheo))}</b>` },
+    { label: 'Còn lại', sort: 'SoNgayConLai', align: 'num', render: (r) => (r.SoNgayConLai < 0 ? `<span style="color:var(--bad)">quá ${-r.SoNgayConLai} ngày</span>` : `${r.SoNgayConLai} ngày`) },
     { label: 'Tình trạng', render: (r) => badge(r.TinhTrang) },
     { label: 'Chuyến sắp tới', align: 'num', key: 'SoChuyenSapToi' },
     ...(actions && canAction('bao-duong') ? [{ label: '', align: 'actions', render: (r) => `<button class="btn sm" data-bd="${esc(r.SoHieuMB)}">Ghi nhận bảo dưỡng</button>` }] : []),

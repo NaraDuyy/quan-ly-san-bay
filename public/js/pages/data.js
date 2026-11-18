@@ -54,9 +54,9 @@ export default async function data(view, m, stale) {
     const res = await api(`/tables/${name}?${new URLSearchParams(q)}`);
     if (stale()) return;
     const cols = t.columns;
-    const arrow = (c) => (q.sort === c ? `<span class="arrow">${q.dir === 'asc' ? '▲' : '▼'}</span>` : '');
+    const arrow = (c) => (q.sort === c ? `<span class="arrow">${q.dir === 'asc' ? '▲' : '▼'}</span>` : '<span class="arrow off">⇅</span>');
     view.querySelector('#tbl').innerHTML = res.rows.length ? `<div class="table-wrap"><table class="tbl">
-      <thead><tr>${cols.map((c) => `<th class="sortable ${['int', 'money', 'decimal'].includes(c.type) && !c.fk ? 'num' : ''}" data-sort="${c.name}">${esc(c.label)}${arrow(c.name)}</th>`).join('')}${editable ? '<th></th>' : ''}</tr></thead>
+      <thead><tr>${cols.map((c) => `<th class="sortable ${['int', 'money', 'decimal'].includes(c.type) && !c.fk ? 'num' : ''}" data-sort="${c.name}" title="Bấm để sắp xếp tăng / giảm (trên toàn bộ bảng, không chỉ trang này)">${esc(c.label)}${arrow(c.name)}</th>`).join('')}${editable ? '<th></th>' : ''}</tr></thead>
       <tbody>${res.rows.map((r, i) => `<tr>${cols.map((c) => `<td class="${['int', 'money', 'decimal'].includes(c.type) && !c.fk ? 'num' : ''}">${cellHtml(name, c, r)}</td>`).join('')}
         ${editable ? `<td class="actions"><button class="btn sm link" data-edit="${i}">Sửa</button><button class="btn sm link danger" data-del="${i}">Xóa</button></td>` : ''}</tr>`).join('')}</tbody>
     </table></div>` : '<div class="empty">Không có bản ghi nào</div>';

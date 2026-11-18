@@ -58,7 +58,7 @@ export default async function flight(view, m, stale) {
           { label: 'Họ tên', render: (r) => `<b>${esc(r.HoTen)}</b>` },
           { label: 'Vị trí', render: (r) => esc(label(r.ViTri)) },
           { label: 'Vai trò trên chuyến', render: (r) => esc(VAI_TRO_LABEL[r.VaiTro]) },
-          { label: 'Thưởng chuyến', align: 'num', render: (r) => money(r.MucThuongChuyen) },
+          { label: 'Thưởng chuyến', sort: 'MucThuongChuyen', align: 'num', render: (r) => money(r.MucThuongChuyen) },
           ...(phanCong ? [{ label: '', align: 'actions', render: (r) => `<button class="btn sm link danger" data-rm="${r.MaNV}">Gỡ</button>` }] : []),
         ], d.toPhucVu, { empty: 'Chưa phân công nhân viên' })}</div>
         ${phanCong ? `<form class="card-body filters" id="pc" style="padding-top:14px;border-top:1px solid var(--border)">
@@ -79,9 +79,9 @@ export default async function flight(view, m, stale) {
           { label: 'Hành khách', render: (r) => `<a href="#/q/3/${r.MaHK}">${esc(r.HoTen)}</a><span class="fk-sub">${esc(r.SoGiayTo)}</span>` },
           { label: 'Hạng', render: (r) => esc(label(r.HangGhe)) },
           { label: 'Ghế', render: (r) => `<b>${esc(r.SoGhe)}</b>` },
-          { label: 'Giá vé', align: 'num', render: (r) => money(r.GiaVe) },
-          { label: 'Đặt lúc', render: (r) => esc(dt(r.NgayDat)) },
-          { label: 'Hành lý', align: 'num', render: (r) => `${r.SoKienHL} kiện${r.PhiHanhLy ? ` · <span style="color:var(--warn)">${money(r.PhiHanhLy)}</span>` : ''}` },
+          { label: 'Giá vé', sort: 'GiaVe', align: 'num', render: (r) => money(r.GiaVe) },
+          { label: 'Đặt lúc', sort: 'NgayDat', render: (r) => esc(dt(r.NgayDat)) },
+          { label: 'Hành lý', sort: 'SoKienHL', align: 'num', render: (r) => `${r.SoKienHL} kiện${r.PhiHanhLy ? ` · <span style="color:var(--warn)">${money(r.PhiHanhLy)}</span>` : ''}` },
           { label: 'Trạng thái', render: (r) => badge(r.TrangThai) },
         ], d.ve, { empty: 'Chưa bán vé nào' })}</div></div>`;
 
